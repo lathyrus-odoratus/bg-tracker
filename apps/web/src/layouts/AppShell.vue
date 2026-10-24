@@ -23,6 +23,9 @@ async function logout() {
         <RouterLink to="/mechanisms" class="text-sm text-muted" active-class="!text-ink font-bold">
           機制
         </RouterLink>
+        <RouterLink to="/board" class="text-sm text-muted" active-class="!text-ink font-bold">
+          留言板
+        </RouterLink>
       </nav>
       <div v-if="session.me" class="flex items-center gap-3">
         <img :src="session.me.avatarUrl" alt="" class="size-8 rounded-full" />

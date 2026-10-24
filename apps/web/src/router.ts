@@ -35,6 +35,8 @@ export function createAppRouter(pinia: Pinia): Router {
         component: () => import('./views/LoginView.vue'),
         meta: { bare: true },
       },
+      // 未登入不跳轉，頁面自己顯示需要登入的提示
+      { path: '/board', component: () => import('./views/BoardView.vue') },
       { path: '/games', component: () => import('./views/GamesView.vue') },
       { path: '/games/:id', component: () => import('./views/GameView.vue') },
       { path: '/mechanisms', component: () => import('./views/MechanismsView.vue') },

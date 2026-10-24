@@ -8,6 +8,7 @@ import { authApiRoutes, meRoutes } from './auth/routes.ts'
 import { webOAuthRoutes } from './auth/web-oauth.ts'
 import { catalogRoutes } from './catalog/routes.ts'
 import { adminCatalogRoutes } from './admin/catalog.ts'
+import { boardRoutes } from './board/routes.ts'
 
 export interface AppOptions {
   /** web 的 build 輸出目錄；不給就不提供 SPA（例如測試） */
@@ -21,6 +22,7 @@ function createApiRoutes() {
     .route('/me', meRoutes)
     .route('/', catalogRoutes)
     .route('/admin', adminCatalogRoutes)
+    .route('/posts', boardRoutes)
     .get('/health', (c) => {
       const { config } = c.get('deps')
       const body: HealthResponse = { status: 'ok', version: config.version, commit: config.commit }
