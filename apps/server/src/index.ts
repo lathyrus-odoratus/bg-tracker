@@ -7,6 +7,7 @@ import { createDb } from './db/client.ts'
 import { runMigrations } from './db/migrate.ts'
 import { createLogger } from './logger.ts'
 import { createDiscordClient } from './discord/client.ts'
+import { createBgaClient } from './bga/catalog.ts'
 import { createRateLimits } from './http/rate-limit.ts'
 
 async function main() {
@@ -34,6 +35,7 @@ async function main() {
     logger,
     now: () => new Date(),
     discord: createDiscordClient(config.discordClientId, config.discordClientSecret),
+    bga: createBgaClient(),
     rateLimits: createRateLimits(),
   }
   const app = createApp(deps, { webDistDir })

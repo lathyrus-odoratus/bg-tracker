@@ -32,3 +32,17 @@ export const mechanismInputSchema = z.object({
 export type MechanismInput = z.infer<typeof mechanismInputSchema>
 
 export const createdSchema = z.object({ id: z.string() })
+
+/** `GET /api/bga/:slug`：從 BGA 取得的遊戲資料（登入的人都能查；新增／編輯遊戲時帶入） */
+export const bgaLookupSchema = z.object({
+  slug: z.string(),
+  nameEn: z.string(),
+  /** 繁體中文名稱；BGA 沒有翻譯時為 null */
+  nameZh: z.string().nullable(),
+  minPlayers: z.number().nullable(),
+  maxPlayers: z.number().nullable(),
+  bggId: z.number().nullable(),
+})
+export type BgaLookup = z.infer<typeof bgaLookupSchema>
+
+export const bgaSlugParamSchema = z.object({ slug: z.string().regex(/^[a-z0-9]+$/) })

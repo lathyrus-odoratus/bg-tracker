@@ -20,6 +20,16 @@ export const BACKLOG: string[] = [
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.4.0',
+    date: '2026-10-25',
+    changes: [
+      {
+        kind: '新增',
+        text: '新增、編輯遊戲時，填好 BGA 代號可以按「從 BGA 帶入」名稱、人數與 BGG id（只填空的欄位）',
+      },
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-10-25',
     changes: [

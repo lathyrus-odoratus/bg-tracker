@@ -38,10 +38,12 @@ export class RateLimiter {
 export interface RateLimits {
   /** 登入：每個 IP 每 60 秒 10 次 */
   login: RateLimiter
+  /** 從 BGA 查遊戲：每個使用者每 60 秒 10 次（每次會打 BGA 兩個頁面） */
+  bgaLookup: RateLimiter
 }
 
 export function createRateLimits(): RateLimits {
-  return { login: new RateLimiter(10, 60_000) }
+  return { login: new RateLimiter(10, 60_000), bgaLookup: new RateLimiter(10, 60_000) }
 }
 
 /** 未登入的請求以 CF-Connecting-IP 為 key（只有 Cloudflare Tunnel 連得進來，可以信任） */

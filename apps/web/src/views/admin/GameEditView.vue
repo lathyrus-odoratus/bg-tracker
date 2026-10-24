@@ -54,6 +54,54 @@ const preview = computed(() => ({
   imageUrl: form.imageUrl.trim() || null,
 }))
 
+/**
+ * 「從 BGA 帶入」：按了才查，只填目前空著的欄位（不蓋掉手動改過的名稱等）
+ */
+const slugValid = computed(() => /^[a-z0-9]+$/.test(form.bgaSlug.trim()))
+const fetchingBga = ref(false)
+const bgaMessage = ref('')
+const bgaError = ref(false)
+
+async function fillFromBga() {
+  fetchingBga.value = true
+  bgaMessage.value = ''
+  bgaError.value = false
+  try {
+    const bga = await unwrap(api.bga[':slug'].$get({ param: { slug: form.bgaSlug.trim() } }))
+    const filled: string[] = []
+    const kept: string[] = []
+    const fill = (
+      label: string,
+      key: 'name' | 'minPlayers' | 'maxPlayers' | 'bggId',
+      value: string | number | null,
+    ) => {
+      if (value === null || value === '') return
+      if (form[key] === '' || form[key] === null) {
+        form[key] = value as never
+        filled.push(label)
+      } else if (String(form[key]) !== String(value)) {
+        kept.push(label)
+      }
+    }
+    fill('名稱', 'name', bga.nameZh ?? bga.nameEn)
+    fill('最少人數', 'minPlayers', bga.minPlayers)
+    fill('最多人數', 'maxPlayers', bga.maxPlayers)
+    fill('BGG id', 'bggId', bga.bggId)
+    bgaMessage.value = [
+      `BGA：${bga.nameZh ? `${bga.nameZh}（${bga.nameEn}）` : bga.nameEn}`,
+      filled.length ? `已帶入${filled.join('、')}` : '沒有空的欄位可以帶入',
+      kept.length ? `${kept.join('、')}已經有值，沒有覆蓋` : '',
+    ]
+      .filter(Boolean)
+      .join('。')
+  } catch (err) {
+    bgaError.value = true
+    bgaMessage.value = errorMessage(err)
+  } finally {
+    fetchingBga.value = false
+  }
+}
+
 const saving = ref(false)
 const error = ref('')
 
@@ -125,14 +173,25 @@ async function remove() {
       </div>
 
       <div class="grid items-start gap-3 sm:grid-cols-2">
-        <label class="grid gap-1">
-          <span class="text-sm font-bold">BGA 代號</span>
-          <input
-            v-model="form.bgaSlug"
-            placeholder="sevenwonders"
-            pattern="[a-z0-9]+"
-            class="field"
-          />
+        <div class="grid gap-1">
+          <label for="bga-slug" class="text-sm font-bold">BGA 代號</label>
+          <div class="flex gap-2">
+            <input
+              id="bga-slug"
+              v-model="form.bgaSlug"
+              placeholder="sevenwonders"
+              pattern="[a-z0-9]+"
+              class="field min-w-0 flex-1"
+            />
+            <button
+              type="button"
+              class="flex-none rounded-xl border border-line px-3 text-sm font-medium hover:border-ink disabled:opacity-50"
+              :disabled="!slugValid || fetchingBga"
+              @click="fillFromBga"
+            >
+              {{ fetchingBga ? '查詢中…' : '從 BGA 帶入' }}
+            </button>
+          </div>
           <span class="text-xs text-muted">
             BGA 遊戲頁網址 <code>gamepanel?game=</code> 後面那段
             <a
@@ -144,7 +203,15 @@ async function remove() {
               >（開啟確認 ↗）</a
             >
           </span>
-        </label>
+          <p
+            v-if="bgaMessage"
+            class="text-xs"
+            :class="bgaError ? 'text-danger' : 'text-muted'"
+            role="status"
+          >
+            {{ bgaMessage }}
+          </p>
+        </div>
         <label class="grid gap-1">
           <span class="text-sm font-bold">BGG id</span>
           <input v-model="form.bggId" type="number" min="1" class="field" />

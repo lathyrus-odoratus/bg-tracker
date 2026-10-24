@@ -10,6 +10,7 @@ import { catalogRoutes } from './catalog/routes.ts'
 import { adminCatalogRoutes } from './admin/catalog.ts'
 import { boardRoutes } from './board/routes.ts'
 import { markRoutes } from './plays/mark-routes.ts'
+import { bgaRoutes } from './bga/routes.ts'
 
 export interface AppOptions {
   /** web 的 build 輸出目錄；不給就不提供 SPA（例如測試） */
@@ -25,6 +26,7 @@ function createApiRoutes() {
     .route('/', catalogRoutes)
     .route('/admin', adminCatalogRoutes)
     .route('/posts', boardRoutes)
+    .route('/bga', bgaRoutes)
     .get('/health', (c) => {
       const { config } = c.get('deps')
       const body: HealthResponse = { status: 'ok', version: config.version, commit: config.commit }

@@ -1,3 +1,5 @@
+import { AppError } from '../errors.ts'
+
 /**
  * 從 BGA 的遊戲頁取出遊戲資料。BGA 沒有公開 API：
  * - 英文頁（`en.`）內嵌全站遊戲目錄的 JSON，每款一個物件（`"name":"<slug>"`）
@@ -87,14 +89,54 @@ async function fetchPage(url: string) {
     headers: { 'user-agent': 'bg-tracker (personal board game group site)' },
     signal: AbortSignal.timeout(20_000),
   })
-  if (!res.ok) throw new Error(`GET ${url} → ${res.status}`)
-  return res.text()
+  return { ok: res.ok, status: res.status, text: await res.text() }
 }
 
-export async function fetchBgaGame(slug: string): Promise<BgaGame> {
-  if (!SLUG_RE.test(slug)) throw new Error(`BGA 代號格式不對：${slug}`)
-  const entry = parseCatalogEntry(await fetchPage(gamePanelUrl(slug)), slug)
-  if (!entry) throw new Error(`BGA 頁面裡找不到 ${slug}`)
-  const nameZh = parseZhName(await fetchPage(gamePanelUrl(slug, 'zh')))
+async function fetchOk(url: string) {
+  const page = await fetchPage(url)
+  if (!page.ok) throw new Error(`GET ${url} → ${page.status}`)
+  return page.text
+}
+
+/** 遊戲列表頁也內嵌全站目錄；用來確認一個代號在 BGA 上存不存在 */
+const GAME_LIST_URL = 'https://en.boardgamearena.com/gamelist'
+
+/** BGA 沒有這個代號時回傳 null；網路或 BGA 本身的錯誤照常丟出 */
+async function lookupBgaGame(slug: string): Promise<BgaGame | null> {
+  if (!SLUG_RE.test(slug)) return null
+  const panel = await fetchPage(gamePanelUrl(slug))
+  if (!panel.ok) {
+    // BGA 對不存在的遊戲回 500，和 BGA 真的出錯分不出來：查目錄，不在目錄裡才算找不到
+    if (!parseCatalogEntry(await fetchOk(GAME_LIST_URL), slug)) return null
+    throw new Error(`GET ${gamePanelUrl(slug)} → ${panel.status}`)
+  }
+  const entry = parseCatalogEntry(panel.text, slug)
+  if (!entry) return null
+  const nameZh = parseZhName(await fetchOk(gamePanelUrl(slug, 'zh')))
   return toBgaGame(entry, nameZh)
+}
+
+/** 給 scripts/bga-import.ts 用：找不到就丟錯誤 */
+export async function fetchBgaGame(slug: string): Promise<BgaGame> {
+  const game = await lookupBgaGame(slug)
+  if (!game) throw new Error(`BGA 找不到 ${slug}`)
+  return game
+}
+
+/** 呼叫 BGA 的部分；測試時換成假的實作 */
+export interface BgaClient {
+  /** 找不到回傳 null；BGA 連不上時丟出 502 */
+  lookup(slug: string): Promise<BgaGame | null>
+}
+
+export function createBgaClient(): BgaClient {
+  return {
+    async lookup(slug) {
+      try {
+        return await lookupBgaGame(slug)
+      } catch (err) {
+        throw new AppError('bga_unavailable', 502, 'BGA 暫時連不上，稍後再試', undefined, err)
+      }
+    },
+  }
 }

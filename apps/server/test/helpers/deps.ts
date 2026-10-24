@@ -4,6 +4,7 @@ import type { Deps } from '../../src/env.ts'
 import { createLogger } from '../../src/logger.ts'
 import { createRateLimits } from '../../src/http/rate-limit.ts'
 import { FakeDiscord } from './discord.ts'
+import { FakeBga } from './bga.ts'
 
 export const testConfig: Config = {
   port: 3000,
@@ -29,6 +30,7 @@ export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
     logger: createLogger('silent'),
     now: () => new Date(),
     discord: new FakeDiscord(),
+    bga: new FakeBga(),
     rateLimits: createRateLimits(),
     ...overrides,
   }
