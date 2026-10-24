@@ -13,6 +13,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.2.0',
+    date: '2026-10-25',
+    changes: [
+      {
+        kind: '新增',
+        text: '首頁左側加上遊戲圖示，移上去顯示名稱並在圓形圖上點亮，點擊看詳情（寬螢幕）',
+      },
+      { kind: '改進', text: '圓形圖上太長的名稱改成截斷，移上去可以看完整名稱' },
+    ],
+  },
+  {
     version: '0.1.0',
     date: '2026-10-25',
     summary: '第一個版本上線（bg-tracker.miao-bao.cc）。',

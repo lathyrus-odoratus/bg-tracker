@@ -16,8 +16,8 @@ const KIND_CLASS = {
     <h1 class="text-2xl font-black">更新紀錄</h1>
     <article
       v-for="release in CHANGELOG"
-      :key="release.version"
       :id="`v${release.version}`"
+      :key="release.version"
       class="grid gap-3 rounded-2xl bg-card p-5 shadow-card"
     >
       <header class="flex flex-wrap items-baseline gap-x-3">

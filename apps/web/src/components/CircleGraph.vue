@@ -19,6 +19,8 @@ const props = defineProps<{
   graph: Graph
   /** 點擊選取的節點（詳情顯示在圖旁邊） */
   selected: Selection | null
+  /** 圖外面 hover 的節點（例如旁邊的圖示列表），和圖上的 hover 一樣點亮 */
+  highlight?: Selection | null
 }>()
 const emit = defineEmits<{ select: [Selection | null] }>()
 
@@ -44,9 +46,27 @@ const hitInner = computed(() => radius.value - 14)
 const hitOuter = computed(() => radius.value + LABEL_SPACE - 4)
 const layout = computed(() => circleLayout(props.graph, radius.value))
 
-/** hover／鍵盤 focus 暫時點亮；沒有的話點亮選取的節點 */
+/** hover／鍵盤 focus 暫時點亮（圖上或圖外）；沒有的話點亮選取的節點 */
 const hovered = ref<Selection | null>(null)
-const active = computed(() => hovered.value ?? props.selected)
+const active = computed(() => hovered.value ?? props.highlight ?? props.selected)
+
+/**
+ * 標籤放不下就截斷，完整名稱放在 <title>（hover 提示）。
+ * 用估計寬度判斷（12px 字：中日韓全形字約 12px、其他約 6.6px），英文名稱可以放比較多字
+ */
+const LABEL_MAX_WIDTH = LABEL_SPACE - LABEL_OFFSET - 4
+const charWidth = (ch: string) => (/[\u2E80-\uFFEF]/.test(ch) ? 12 : 6.6)
+function shortLabel(name: string) {
+  const chars = [...name]
+  if (chars.reduce((w, ch) => w + charWidth(ch), 0) <= LABEL_MAX_WIDTH) return name
+  let width = charWidth('…')
+  let end = 0
+  while (end < chars.length && width + charWidth(chars[end]!) <= LABEL_MAX_WIDTH) {
+    width += charWidth(chars[end]!)
+    end++
+  }
+  return `${chars.slice(0, end).join('').trimEnd()}…`
+}
 const lit = computed(() =>
   active.value ? connectedKeys(props.graph, active.value.kind, active.value.id) : null,
 )
@@ -131,8 +151,9 @@ function select(n: LayoutNode) {
             dy="0.35em"
             class="label"
           >
-            {{ node.name }}
+            {{ shortLabel(node.name) }}
           </text>
+          <title>{{ node.name }}</title>
         </g>
       </g>
     </svg>

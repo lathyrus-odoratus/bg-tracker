@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { computed, nextTick, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CircleGraph, { type Selection } from '../components/CircleGraph.vue'
 import GamePanel from '../components/GamePanel.vue'
 import MechanismPanel from '../components/MechanismPanel.vue'
 import TopWishes from '../components/TopWishes.vue'
-import { useGraph, useMyGameStats } from '../composables/catalog.ts'
+import GameIconGrid from '../components/GameIconGrid.vue'
+import { useGames, useGraph, useMyGameStats } from '../composables/catalog.ts'
 
 const route = useRoute()
 const router = useRouter()
 const { data: graph, isPending, isError } = useGraph()
+const { data: games } = useGames()
 const my = useMyGameStats()
+/** 左側圖示 hover 中的遊戲：圓形圖跟著點亮 */
+const listHover = ref<Selection | null>(null)
 
 /** 選取的節點放在網址（?game=… 或 ?mechanism=…），可以分享，上一頁也回得去 */
 const selected = computed<Selection | null>(() => {
@@ -34,7 +38,19 @@ watch(selected, async (next) => {
 </script>
 
 <template>
-  <div class="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+  <!-- 寬螢幕三欄：圖示格子｜圓形圖｜詳情；窄一點時不放圖示格子（遊戲列表頁一樣能用） -->
+  <div
+    class="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] xl:max-w-[92rem] xl:grid-cols-[10rem_minmax(0,1fr)_22rem]"
+  >
+    <!-- 不設 overflow：hover 時的名稱提示要能超出這一欄 -->
+    <aside v-if="games?.length" class="hidden xl:sticky xl:top-6 xl:block xl:self-start xl:p-1">
+      <GameIconGrid
+        :games="games"
+        :selected-id="selected?.kind === 'game' ? selected.id : null"
+        @select="select"
+        @hover="listHover = $event"
+      />
+    </aside>
     <section class="grid min-w-0 content-start gap-3">
       <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h1 class="text-2xl font-black">遊戲與機制</h1>
@@ -51,7 +67,13 @@ watch(selected, async (next) => {
       <p v-if="isPending" class="text-muted">載入中…</p>
       <p v-else-if="isError" class="text-danger">載入失敗，請重新整理。</p>
       <p v-else-if="graph && graph.games.length === 0" class="text-muted">還沒有任何遊戲。</p>
-      <CircleGraph v-else-if="graph" :graph="graph" :selected="selected" @select="select" />
+      <CircleGraph
+        v-else-if="graph"
+        :graph="graph"
+        :selected="selected"
+        :highlight="listHover"
+        @select="select"
+      />
       <p class="text-sm text-muted">
         也可以用列表瀏覽：
         <RouterLink to="/games" class="text-accent">全部遊戲</RouterLink> ·
