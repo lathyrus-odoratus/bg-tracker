@@ -9,6 +9,7 @@ import { webOAuthRoutes } from './auth/web-oauth.ts'
 import { catalogRoutes } from './catalog/routes.ts'
 import { adminCatalogRoutes } from './admin/catalog.ts'
 import { boardRoutes } from './board/routes.ts'
+import { markRoutes } from './plays/mark-routes.ts'
 
 export interface AppOptions {
   /** web 的 build 輸出目錄；不給就不提供 SPA（例如測試） */
@@ -20,6 +21,7 @@ function createApiRoutes() {
     .use('*', loadSession)
     .route('/auth', authApiRoutes)
     .route('/me', meRoutes)
+    .route('/me', markRoutes)
     .route('/', catalogRoutes)
     .route('/admin', adminCatalogRoutes)
     .route('/posts', boardRoutes)

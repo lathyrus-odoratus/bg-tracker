@@ -21,11 +21,17 @@ export const topWishesQuerySchema = z.object({
 export const topWishSchema = z.object({ gameId: z.string(), name: z.string(), count: z.number() })
 export type TopWish = z.infer<typeof topWishSchema>
 
-/** `GET /api/me/game-stats`：目前身分在各遊戲的狀態；沒玩過也沒想玩的遊戲不列出 */
+/**
+ * `GET /api/me/game-stats`：目前身分在各遊戲的狀態；沒玩過、沒標記的遊戲不列出。
+ * `playCount`／`lastPlayedAt` 只從遊玩紀錄算；`played` = 有紀錄或自己標了玩過
+ */
 export const myGameStatSchema = z.object({
   gameId: z.string(),
   playCount: z.number(),
   lastPlayedAt: z.string().nullable(),
+  played: z.boolean(),
+  /** 自己標了玩過（可以取消；有遊玩紀錄的不受影響） */
+  markedPlayed: z.boolean(),
   wished: z.boolean(),
 })
 export type MyGameStat = z.infer<typeof myGameStatSchema>
@@ -70,6 +76,7 @@ export const gameDetailSchema = gameSummarySchema.extend({
   mechanisms: z.array(ref),
   plays: z.array(playSchema),
   wishers: z.array(userRef),
+  /** 玩過的人：有遊玩紀錄或自己標了玩過；只有標記的 playCount 是 0 */
   players: z.array(userRef.extend({ playCount: z.number() })),
 })
 export type GameDetail = z.infer<typeof gameDetailSchema>

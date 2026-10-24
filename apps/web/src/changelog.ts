@@ -13,13 +13,20 @@ export interface Release {
 
 /** 還沒做、打算做的功能；做完就移到對應版本的 changes */
 export const BACKLOG: string[] = [
-  '標想玩的功能',
   '研究討論遊戲還可以有哪些標籤',
   '輸入遊玩紀錄的功能',
   '遊戲列表的排序功能',
 ]
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '0.3.0',
+    date: '2026-10-25',
+    changes: [
+      { kind: '新增', text: '在遊戲頁與首頁的詳情標「想玩」，大家想玩排行跟著更新' },
+      { kind: '新增', text: '自己標「玩過」：還沒有遊玩紀錄也能標，會出現在遊戲頁的「誰玩過」' },
+    ],
+  },
   {
     version: '0.2.0',
     date: '2026-10-25',

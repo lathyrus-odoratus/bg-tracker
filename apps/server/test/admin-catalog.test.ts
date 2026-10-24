@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { createApp } from '../src/app.ts'
-import { gameMechanisms, games, mechanisms, plays, wishes } from '../src/db/schema/index.ts'
+import {
+  gameMechanisms,
+  games,
+  mechanisms,
+  playedMarks,
+  plays,
+  wishes,
+} from '../src/db/schema/index.ts'
 import { useTestDb } from './helpers/db.ts'
 import { createTestDeps } from './helpers/deps.ts'
 import { createTestUser, loginAs } from './helpers/auth.ts'
@@ -89,7 +96,7 @@ describe('管理：遊戲', () => {
     expect(badSlug.status).toBe(400)
   })
 
-  it('刪除：一併刪掉機制對應與想玩；有遊玩紀錄時 409', async () => {
+  it('刪除：一併刪掉機制對應、想玩與玩過標記；有遊玩紀錄時 409', async () => {
     const { admin, headers } = await asAdmin()
     const [m] = await db.insert(mechanisms).values({ name: '拍賣競標' }).returning()
     const [highSociety, played] = await db
@@ -98,6 +105,7 @@ describe('管理：遊戲', () => {
       .returning()
     await db.insert(gameMechanisms).values({ gameId: highSociety!.id, mechanismId: m!.id })
     await db.insert(wishes).values({ userId: admin.id, gameId: highSociety!.id })
+    await db.insert(playedMarks).values({ userId: admin.id, gameId: highSociety!.id })
     await db.insert(plays).values({
       gameId: played!.id,
       playedAt: new Date(),
@@ -113,6 +121,7 @@ describe('管理：遊戲', () => {
     expect(ok.status).toBe(204)
     expect(await db.select().from(games).where(eq(games.id, highSociety!.id))).toHaveLength(0)
     expect(await db.select().from(wishes)).toHaveLength(0)
+    expect(await db.select().from(playedMarks)).toHaveLength(0)
 
     const blocked = await app.request(`/api/admin/games/${played!.id}`, {
       method: 'DELETE',

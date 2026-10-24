@@ -153,12 +153,16 @@ describe('GET /api/me/game-stats', () => {
       gameId: agricola.id,
       playCount: 2,
       lastPlayedAt: '2026-10-20T12:00:00.000Z',
+      played: true,
+      markedPlayed: false,
       wished: false,
     })
     expect(body).toContainEqual({
       gameId: carcassonne.id,
       playCount: 0,
       lastPlayedAt: null,
+      played: false,
+      markedPlayed: false,
       wished: true,
     })
   })

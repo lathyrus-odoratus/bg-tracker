@@ -4,6 +4,7 @@ import { useGame, type useMyGameStats } from '../composables/catalog.ts'
 import { formatDate, formatPlayers } from '../lib/format.ts'
 import type { Selection } from './CircleGraph.vue'
 import GameCover from './GameCover.vue'
+import MarkToggles from './MarkToggles.vue'
 import { bgaGameUrl } from '../lib/bga.ts'
 
 const props = defineProps<{ id: string; my: ReturnType<typeof useMyGameStats>['value'] }>()
@@ -48,14 +49,10 @@ const facts = computed(() =>
     <p v-if="isPending" class="text-sm text-muted">載入中…</p>
     <p v-else-if="error" class="text-sm text-danger">載入失敗</p>
     <template v-else-if="game">
-      <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        <dt class="text-muted">我玩過</dt>
-        <dd>{{ stat?.playCount ?? 0 }} 次</dd>
-        <dt class="text-muted">上次遊玩</dt>
-        <dd>{{ stat?.lastPlayedAt ? formatDate(stat.lastPlayedAt) : '—' }}</dd>
-        <dt class="text-muted">我想玩</dt>
-        <dd>{{ stat?.wished ? '★ 想玩' : '☆ 還沒標' }}</dd>
-      </dl>
+      <MarkToggles :game-id="game.id" :stat="stat" />
+      <p v-if="stat?.lastPlayedAt" class="text-sm text-muted">
+        上次遊玩 {{ formatDate(stat.lastPlayedAt) }}
+      </p>
 
       <section class="grid gap-1.5">
         <h3 class="text-sm font-bold">用到的機制</h3>

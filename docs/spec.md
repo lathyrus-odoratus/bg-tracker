@@ -22,6 +22,7 @@
 | BGA 帳號綁定 | 管理員手動指定 BGA 名稱 → 使用者（不分大小寫，一個名稱只對一位） | 避免冒用。第一版管理員只有專案擁有者 |
 | 管理員 | `ADMIN_DISCORD_IDS` 裡的人登入時升級成 admin（只升不降） | |
 | 部署 | `bg-tracker.miao-bao.cc`，hobby-infra 的 Dokploy；push 到 main 由 CI 自動部署；repo `lathyrus-odoratus/bg-tracker`（public） | 和其他個人服務同一套流程 |
+| 玩過 | 有遊玩紀錄，或自己標了「玩過」都算；玩過幾次、上次遊玩只從遊玩紀錄算。有紀錄的不能取消玩過 | 遊玩紀錄的輸入還沒做，先讓大家能自己標（2026-10-25） |
 | 手動紀錄 | 第一版不做；`plays.source` 保留擴充空間 | 之後加 `manual` 來源，參與者要能直接指向使用者 |
 
 ## 資料模型
@@ -39,7 +40,7 @@
 | `play_participants` | 一場的參與者（BGA 名稱）、名次、分數 |
 | `wishes` | 使用者 × 想玩的遊戲 |
 
-- 「玩過、玩過幾次、上次遊玩」不存，一律從 `plays` ＋ `play_participants` ＋ `external_accounts` 推出
+- 「玩過幾次、上次遊玩」不存，一律從 `plays` ＋ `play_participants` ＋ `external_accounts` 推出；「玩過」另外可以自己標（`played_marks`）
 - 學習路線（roadmap）的表還沒建，等下面的待決問題確定
 
 ## 頁面

@@ -3,10 +3,17 @@ name: main
 # push 到 main：檢查 → build 映像檔推到 ghcr → 打 Dokploy 的 deploy webhook。
 # DOKPLOY_WEBHOOK 還沒設定時只推映像檔（服務在 hobby-infra 建好之後再設）。
 
+# 只改文件（docs/、Markdown）時不跑：不影響網站，也不用重新 build、部署
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
 
 concurrency:
   group: main-${{ github.ref }}

@@ -6,6 +6,7 @@ import { useSessionStore } from '../stores/session.ts'
 import { formatDate, formatPlayers } from '../lib/format.ts'
 import { bgaGameUrl } from '../lib/bga.ts'
 import GameCover from '../components/GameCover.vue'
+import MarkToggles from '../components/MarkToggles.vue'
 
 const route = useRoute()
 const id = computed(() => String(route.params.id))
@@ -43,12 +44,9 @@ const facts = computed(() =>
             </RouterLink>
           </div>
           <p v-if="facts.length" class="text-muted">{{ facts.join(' · ') }}</p>
-          <p class="text-sm text-muted">
-            我玩過 {{ myStat?.playCount ?? 0 }} 次
-            <template v-if="myStat?.lastPlayedAt">
-              · 上次 {{ formatDate(myStat.lastPlayedAt) }}
-            </template>
-            · {{ myStat?.wished ? '★ 我想玩' : '☆ 還沒標想玩' }}
+          <MarkToggles :game-id="game.id" :stat="myStat" class="mt-1" />
+          <p v-if="myStat?.lastPlayedAt" class="text-sm text-muted">
+            上次遊玩 {{ formatDate(myStat.lastPlayedAt) }}
           </p>
           <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium">
             <a
@@ -94,7 +92,7 @@ const facts = computed(() =>
           <p v-if="!game.players.length" class="text-sm text-muted">還沒有人。</p>
           <ul v-else class="text-sm">
             <li v-for="p in game.players" :key="p.id">
-              {{ p.displayName }}（{{ p.playCount }} 次）
+              {{ p.displayName }}<template v-if="p.playCount">（{{ p.playCount }} 次）</template>
             </li>
           </ul>
         </div>

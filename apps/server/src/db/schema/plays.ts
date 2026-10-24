@@ -95,7 +95,7 @@ export const playParticipants = pgTable(
   ],
 )
 
-/** 想玩清單（登入的使用者；匿名的放在瀏覽器，登入後併入） */
+/** 想玩清單 */
 export const wishes = pgTable(
   'wishes',
   {
@@ -108,4 +108,25 @@ export const wishes = pgTable(
     createdAt: createdAt(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.gameId] }), index('wishes_game_id').on(t.gameId)],
+)
+
+/**
+ * 自己標的「玩過」。有遊玩紀錄的不用標也算玩過；
+ * 玩過幾次、上次遊玩只從遊玩紀錄算，這裡只記「玩過」這件事
+ */
+export const playedMarks = pgTable(
+  'played_marks',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    gameId: uuid('game_id')
+      .notNull()
+      .references(() => games.id, { onDelete: 'restrict' }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.gameId] }),
+    index('played_marks_game_id').on(t.gameId),
+  ],
 )

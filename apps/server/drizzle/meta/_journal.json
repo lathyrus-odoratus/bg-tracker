@@ -22,6 +22,13 @@
       "when": 1792876568677,
       "tag": "0002_board",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792880810201,
+      "tag": "0003_played_marks",
+      "breakpoints": true
     }
   ]
 }

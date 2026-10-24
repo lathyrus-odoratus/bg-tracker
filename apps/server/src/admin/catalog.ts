@@ -11,7 +11,14 @@ import type { Tx } from '../db/client.ts'
 import { AppError } from '../errors.ts'
 import { validate } from '../http/validate.ts'
 import { requireAuth, requireSystemRole } from '../auth/middleware.ts'
-import { gameMechanisms, games, mechanisms, plays, wishes } from '../db/schema/index.ts'
+import {
+  gameMechanisms,
+  games,
+  mechanisms,
+  playedMarks,
+  plays,
+  wishes,
+} from '../db/schema/index.ts'
 
 /** 唯一約束 → 給管理頁看的錯誤 */
 const UNIQUE_ERRORS: Record<string, [code: string, message: string]> = {
@@ -101,6 +108,7 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
       }
       await tx.delete(gameMechanisms).where(eq(gameMechanisms.gameId, id))
       await tx.delete(wishes).where(eq(wishes.gameId, id))
+      await tx.delete(playedMarks).where(eq(playedMarks.gameId, id))
       const deleted = await tx.delete(games).where(eq(games.id, id)).returning({ id: games.id })
       if (!deleted.length) throw new AppError('not_found', 404, 'Game not found')
     })

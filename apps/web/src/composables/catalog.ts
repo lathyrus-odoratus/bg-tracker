@@ -1,5 +1,5 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MyGameStat } from '@bg-tracker/shared'
 import { api, unwrap } from '../lib/api.ts'
 import { useSessionStore } from '../stores/session.ts'
@@ -51,4 +51,39 @@ export function useMyGameStats() {
   return computed(() => ({
     stats: new Map<string, MyGameStat>((query.data.value ?? []).map((s) => [s.gameId, s])),
   }))
+}
+
+/**
+ * 切換想玩／玩過。成功後直接把回傳的狀態寫進個人統計，
+ * 並讓遊戲詳情（誰想玩、誰玩過）與大家想玩重新取得
+ */
+export function useToggleMark() {
+  const client = useQueryClient()
+  const session = useSessionStore()
+  return useMutation({
+    mutationFn: ({
+      kind,
+      gameId,
+      on,
+    }: {
+      kind: 'wishes' | 'played'
+      gameId: string
+      on: boolean
+    }) => {
+      const route = api.me[kind][':id']
+      return unwrap(
+        on ? route.$put({ param: { id: gameId } }) : route.$delete({ param: { id: gameId } }),
+      )
+    },
+    onSuccess: (stat) => {
+      client.setQueryData<MyGameStat[]>(['me', 'game-stats', session.me?.id], (old = []) => [
+        ...old.filter((s) => s.gameId !== stat.gameId),
+        stat,
+      ])
+      return Promise.all([
+        client.invalidateQueries({ queryKey: ['games', stat.gameId] }),
+        client.invalidateQueries({ queryKey: ['wishes', 'top'] }),
+      ])
+    },
+  })
 }
