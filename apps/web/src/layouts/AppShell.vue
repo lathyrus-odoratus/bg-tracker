@@ -2,9 +2,11 @@
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '../stores/session.ts'
 import ThemeSwitch from '../components/ThemeSwitch.vue'
+import { useAppConfig } from '../composables/app-config.ts'
 
 const session = useSessionStore()
 const router = useRouter()
+const { data: config } = useAppConfig()
 
 /** 整個網站都要登入：登出後回到登入頁 */
 async function logout() {
@@ -42,5 +44,16 @@ async function logout() {
     <main class="min-h-0 flex-1 px-safe py-6">
       <slot />
     </main>
+    <footer
+      class="flex flex-wrap items-center justify-center gap-x-3 border-t border-line px-safe py-4 text-xs text-muted"
+    >
+      <span>桌遊機制圖譜</span>
+      <!-- 本機開發時沒有寫入版本（APP_VERSION 預設 dev） -->
+      <span v-if="config" class="tabular-nums">
+        <template v-if="config.version === 'dev'">開發版</template>
+        <template v-else>v{{ config.version }} · {{ config.commit.slice(0, 7) }}</template>
+      </span>
+      <RouterLink to="/changelog" class="hover:text-ink hover:underline">更新紀錄</RouterLink>
+    </footer>
   </div>
 </template>

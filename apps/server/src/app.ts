@@ -30,7 +30,11 @@ function createApiRoutes() {
     })
     .get('/config', (c) => {
       const { config } = c.get('deps')
-      const body: PublicConfig = { appUrl: config.appUrl }
+      const body: PublicConfig = {
+        appUrl: config.appUrl,
+        version: config.version,
+        commit: config.commit,
+      }
       c.header('Cache-Control', 'no-store')
       return c.json(body)
     })

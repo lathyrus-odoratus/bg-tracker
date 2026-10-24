@@ -35,6 +35,7 @@ export function createAppRouter(pinia: Pinia): Router {
         component: () => import('./views/LoginView.vue'),
         meta: { public: true, bare: true },
       },
+      { path: '/changelog', component: () => import('./views/ChangelogView.vue') },
       { path: '/board', component: () => import('./views/BoardView.vue') },
       { path: '/games', component: () => import('./views/GamesView.vue') },
       { path: '/games/:id', component: () => import('./views/GameView.vue') },

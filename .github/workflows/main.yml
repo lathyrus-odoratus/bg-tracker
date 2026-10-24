@@ -55,8 +55,12 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+      # 版本以根目錄 package.json 為準，寫進映像檔，footer 與 /api/health 會顯示
+      - id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
       - uses: lathyrus-odoratus/dokploy-deploy@v1
         with:
           build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
             APP_COMMIT=${{ github.sha }}
           webhook: ${{ secrets.DOKPLOY_WEBHOOK }}

@@ -29,6 +29,10 @@ describe('GET /api/config', () => {
     const res = await app.request('/api/config')
     expect(res.headers.get('cache-control')).toBe('no-store')
     const body = await res.json()
-    expect(publicConfigSchema.strict().parse(body)).toEqual({ appUrl: 'http://localhost:5180' })
+    expect(publicConfigSchema.strict().parse(body)).toEqual({
+      appUrl: 'http://localhost:5180',
+      version: '0.0.0-test',
+      commit: 'testsha',
+    })
   })
 })

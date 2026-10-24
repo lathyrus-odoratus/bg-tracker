@@ -59,6 +59,12 @@ compose.yaml      本機 Postgres 17（對外 port 5434）
 - **錯誤**：業務錯誤 `throw new AppError(code, status, message?)`；格式都是 `{ error: { code, message, requestId, details? } }`。
 - **Log**：route 內用 `c.get('log')`（已帶 `requestId`）。不能記錄 token、cookie、OAuth code。
 
+## 發版
+
+版本以根目錄 `package.json` 的 `version` 為準（semver）：CI 寫進映像檔，`/api/config`、`/api/health` 回傳，footer 顯示。
+使用者看得到的改動要發版時：`version` 加一，並在 `apps/web/src/changelog.ts` 最前面加一筆（新增／改進／修正）。
+`apps/web/test/changelog.test.ts` 會檢查兩邊一致。
+
 ## 部署
 
 正式站 https://bg-tracker.miao-bao.cc 。推到 `main` → CI 檢查 → `lathyrus-odoratus/dokploy-deploy` build 映像檔推到 `ghcr.io/lathyrus-odoratus/bg-tracker` → 打 Dokploy webhook（repo secret `DOKPLOY_WEBHOOK`）。
