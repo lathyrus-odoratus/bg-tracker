@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CHANGELOG } from '../changelog.ts'
+import { BACKLOG, CHANGELOG } from '../changelog.ts'
 import { useAppConfig } from '../composables/app-config.ts'
 
 const { data: config } = useAppConfig()
@@ -14,6 +14,23 @@ const KIND_CLASS = {
 <template>
   <section class="mx-auto grid max-w-2xl gap-6">
     <h1 class="text-2xl font-black">更新紀錄</h1>
+
+    <section
+      v-if="BACKLOG.length"
+      class="grid gap-3 rounded-2xl border border-dashed border-line p-5"
+      aria-labelledby="backlog"
+    >
+      <h2 id="backlog" class="text-lg font-black">待辦</h2>
+      <p class="text-sm text-muted">還沒做、打算接下來做的功能。</p>
+      <ul class="grid gap-1.5">
+        <li v-for="item in BACKLOG" :key="item" class="flex items-start gap-2 text-sm">
+          <span class="mt-0.5 flex-none rounded border border-line px-1.5 text-xs text-muted">
+            待辦
+          </span>
+          <span>{{ item }}</span>
+        </li>
+      </ul>
+    </section>
     <article
       v-for="release in CHANGELOG"
       :id="`v${release.version}`"

@@ -11,6 +11,14 @@ export interface Release {
   changes: { kind: '新增' | '改進' | '修正'; text: string }[]
 }
 
+/** 還沒做、打算做的功能；做完就移到對應版本的 changes */
+export const BACKLOG: string[] = [
+  '標想玩的功能',
+  '研究討論遊戲還可以有哪些標籤',
+  '輸入遊玩紀錄的功能',
+  '遊戲列表的排序功能',
+]
+
 export const CHANGELOG: Release[] = [
   {
     version: '0.2.0',
