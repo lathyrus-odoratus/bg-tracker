@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
-import { useRouter } from 'vue-router'
 import type { Graph } from '@bg-tracker/shared'
 import {
   circleLayout,
@@ -9,15 +8,18 @@ import {
   type LayoutNode,
   type NodeKind,
 } from '../lib/circle-layout.ts'
-import { formatDate } from '../lib/format.ts'
-import type { useMyGameStats } from '../composables/catalog.ts'
+
+export interface Selection {
+  kind: NodeKind
+  id: string
+}
 
 const props = defineProps<{
   graph: Graph
-  my: ReturnType<typeof useMyGameStats>['value']
+  /** 點擊選取的節點（詳情顯示在圖旁邊） */
+  selected: Selection | null
 }>()
-
-const router = useRouter()
+const emit = defineEmits<{ select: [Selection | null] }>()
 
 /** 標籤要佔的寬度：中文名稱約 7 字 × 12px，再加上和圓點的距離 */
 const LABEL_SPACE = 96
@@ -38,14 +40,16 @@ onBeforeUnmount(() => observer?.disconnect())
 const radius = computed(() => Math.max(60, size.value / 2 - LABEL_SPACE))
 const layout = computed(() => circleLayout(props.graph, radius.value))
 
-/** 點亮的節點：hover、鍵盤 focus、或觸控時第一次點擊 */
-const active = ref<{ kind: NodeKind; id: string } | null>(null)
+/** hover／鍵盤 focus 暫時點亮；沒有的話點亮選取的節點 */
+const hovered = ref<Selection | null>(null)
+const active = computed(() => hovered.value ?? props.selected)
 const lit = computed(() =>
   active.value ? connectedKeys(props.graph, active.value.kind, active.value.id) : null,
 )
-const key = (n: { kind: NodeKind; id: string }) => `${n.kind}:${n.id}`
+const key = (n: Selection) => `${n.kind}:${n.id}`
 
 function nodeState(n: LayoutNode) {
+  if (props.selected && key(props.selected) === key(n)) return 'selected'
   if (!lit.value) return 'idle'
   if (active.value && key(active.value) === key(n)) return 'active'
   return lit.value.has(key(n)) ? 'lit' : 'dim'
@@ -57,85 +61,36 @@ function linkLit(gameId: string, mechanismId: string) {
   return a.kind === 'game' ? a.id === gameId : a.id === mechanismId
 }
 
-/** 觸控沒有 hover：第一次點只點亮，點同一個才進入頁面 */
-let lastPointer = 'mouse'
-function onPointerDown(e: PointerEvent) {
-  lastPointer = e.pointerType
-}
-
-// 觸控的 pointerenter／pointerleave 會在每次點擊時觸發，交給 onClick 處理
+// 觸控的 pointerenter／pointerleave 在每次點擊時都會觸發，不當成 hover
 function onEnter(e: PointerEvent, n: LayoutNode) {
-  if (e.pointerType !== 'touch') active.value = { kind: n.kind, id: n.id }
+  if (e.pointerType !== 'touch') hovered.value = { kind: n.kind, id: n.id }
 }
 function onLeave(e: PointerEvent) {
-  if (e.pointerType !== 'touch') active.value = null
+  if (e.pointerType !== 'touch') hovered.value = null
 }
-
-// 只有鍵盤 focus 才點亮；點擊造成的 focus 交給 onClick，不然觸控第一次點就會換頁
+// 只有鍵盤 focus 才當成 hover；點擊造成的 focus 不算
 function onFocus(e: FocusEvent, n: LayoutNode) {
-  if ((e.target as Element).matches(':focus-visible')) active.value = { kind: n.kind, id: n.id }
+  if ((e.target as Element).matches(':focus-visible')) hovered.value = { kind: n.kind, id: n.id }
 }
 
-function open(n: LayoutNode) {
-  void router.push(n.kind === 'game' ? `/games/${n.id}` : `/mechanisms/${n.id}`)
+function select(n: LayoutNode) {
+  emit('select', { kind: n.kind, id: n.id })
 }
-
-function onClick(n: LayoutNode) {
-  if (lastPointer === 'touch' && (!active.value || key(active.value) !== key(n))) {
-    active.value = { kind: n.kind, id: n.id }
-    return
-  }
-  open(n)
-}
-
-const activeNode = computed(() =>
-  active.value ? layout.value.nodes.find((n) => key(n) === key(active.value!)) : undefined,
-)
-const linkCount = computed(() => (lit.value ? lit.value.size - 1 : 0))
-const activeStat = computed(() =>
-  activeNode.value?.kind === 'game' ? props.my.stats.get(activeNode.value.id) : undefined,
-)
 </script>
 
 <template>
-  <div ref="container" class="grid w-full gap-2" @pointerleave="onLeave">
-    <!-- 資訊列：固定在圖的上方，不遮住節點與連線；觸控時也看得到 -->
-    <div
-      class="flex min-h-16 flex-wrap items-center gap-x-4 gap-y-0.5 rounded-xl border border-line bg-card px-4 py-2 text-sm"
-      role="status"
-    >
-      <template v-if="activeNode">
-        <span class="flex items-center gap-2 font-bold">
-          <span class="size-2.5 flex-none rounded-full" :class="`swatch-${activeNode.kind}`" />
-          {{ activeNode.name }}
-        </span>
-        <template v-if="activeNode.kind === 'game'">
-          <template v-if="my.loggedIn">
-            <span class="text-muted">我玩過 {{ activeStat?.playCount ?? 0 }} 次</span>
-            <span class="text-muted">
-              上次遊玩：{{ activeStat?.lastPlayedAt ? formatDate(activeStat.lastPlayedAt) : '—' }}
-            </span>
-          </template>
-          <span v-else class="text-muted">登入後顯示遊玩紀錄</span>
-          <span class="text-muted">{{ activeStat?.wished ? '★ 我想玩' : '☆ 還沒標想玩' }}</span>
-          <span class="text-muted">{{ linkCount }} 個機制</span>
-        </template>
-        <span v-else class="text-muted">{{ linkCount }} 款遊戲使用</span>
-      </template>
-      <span v-else class="text-muted">
-        移到遊戲上會點亮它用到的機制，移到機制上會點亮使用它的遊戲；點擊進入詳細頁。觸控時先點一下點亮，再點一下進入。
-      </span>
-    </div>
+  <div ref="container" class="w-full" @pointerleave="onLeave">
     <svg
       v-if="size > 0"
       :width="size"
       :height="size"
       :viewBox="`${-size / 2} ${-size / 2} ${size} ${size}`"
       class="mx-auto block"
-      role="img"
+      role="group"
       aria-label="桌遊與機制的關係圖：右半圈是遊戲，左半圈是機制"
+      @click.self="emit('select', null)"
     >
-      <g fill="none" stroke-linecap="round">
+      <g fill="none" stroke-linecap="round" pointer-events="none">
         <path
           v-for="link in layout.links"
           :key="`${link.gameId}:${link.mechanismId}`"
@@ -153,14 +108,15 @@ const activeStat = computed(() =>
           :data-kind="node.kind"
           :data-state="nodeState(node)"
           tabindex="0"
-          role="link"
+          role="button"
+          :aria-pressed="nodeState(node) === 'selected'"
           :aria-label="`${node.kind === 'game' ? '遊戲' : '機制'}：${node.name}`"
           @pointerenter="onEnter($event, node)"
-          @pointerdown="onPointerDown"
           @focus="onFocus($event, node)"
-          @blur="active = null"
-          @click="onClick(node)"
-          @keydown.enter="open(node)"
+          @blur="hovered = null"
+          @click="select(node)"
+          @keydown.enter.prevent="select(node)"
+          @keydown.space.prevent="select(node)"
         >
           <!-- 比圓點大的透明命中區 -->
           <line
@@ -214,15 +170,11 @@ const activeStat = computed(() =>
   stroke: var(--card);
   stroke-width: 2;
 }
-.node[data-kind='game'] .dot,
-.swatch-game {
+.node[data-kind='game'] .dot {
   fill: var(--game);
-  background: var(--game);
 }
-.node[data-kind='mechanism'] .dot,
-.swatch-mechanism {
+.node[data-kind='mechanism'] .dot {
   fill: var(--mechanism);
-  background: var(--mechanism);
 }
 .label {
   fill: var(--ink);
@@ -233,8 +185,15 @@ const activeStat = computed(() =>
   opacity: 0.3;
 }
 .node[data-state='active'] .label,
-.node[data-state='lit'] .label {
+.node[data-state='lit'] .label,
+.node[data-state='selected'] .label {
   font-weight: 700;
+}
+/* 選取的節點：圓點放大並加外圈 */
+.node[data-state='selected'] .dot {
+  r: 7;
+  stroke: var(--ink);
+  stroke-width: 2;
 }
 .node:focus-visible .label {
   text-decoration: underline;

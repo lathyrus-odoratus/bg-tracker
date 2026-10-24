@@ -20,6 +20,14 @@ export function loginPath(returnTo: string) {
 export function createAppRouter(pinia: Pinia): Router {
   const router = createRouter({
     history: createWebHistory(),
+    // 連到 #plays 這類錨點時捲過去；其他換頁回到頂端，上一頁回到原本的位置
+    scrollBehavior(to, from, saved) {
+      if (saved) return saved
+      if (to.hash) return { el: to.hash }
+      // 首頁只換選取（query）時不捲動
+      if (to.path === from.path) return false
+      return { top: 0 }
+    },
     routes: [
       { path: '/', component: () => import('./views/HomeView.vue') },
       {
@@ -31,6 +39,26 @@ export function createAppRouter(pinia: Pinia): Router {
       { path: '/games/:id', component: () => import('./views/GameView.vue') },
       { path: '/mechanisms', component: () => import('./views/MechanismsView.vue') },
       { path: '/mechanisms/:id', component: () => import('./views/MechanismView.vue') },
+      {
+        path: '/admin/games/new',
+        component: () => import('./views/admin/GameEditView.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: '/admin/games/:id/edit',
+        component: () => import('./views/admin/GameEditView.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: '/admin/mechanisms/new',
+        component: () => import('./views/admin/MechanismEditView.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: '/admin/mechanisms/:id/edit',
+        component: () => import('./views/admin/MechanismEditView.vue'),
+        meta: { admin: true },
+      },
       { path: '/:pathMatch(.*)*', component: () => import('./views/NotFoundView.vue') },
     ],
   })

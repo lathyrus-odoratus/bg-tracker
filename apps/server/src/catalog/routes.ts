@@ -23,6 +23,8 @@ const gameColumns = {
   maxPlayers: games.maxPlayers,
   playMinutes: games.playMinutes,
   bggId: games.bggId,
+  bgaSlug: games.bgaSlug,
+  imageUrl: games.imageUrl,
 }
 
 /** 遊戲與機制：匿名也能讀 */
@@ -115,7 +117,7 @@ export const catalogRoutes = new Hono<AppEnv>()
       .where(eq(mechanisms.id, id))
     if (!mechanism) throw new AppError('not_found', 404, 'Mechanism not found')
     const gameRows = await db
-      .select({ id: games.id, name: games.name })
+      .select({ id: games.id, name: games.name, bgaSlug: games.bgaSlug, imageUrl: games.imageUrl })
       .from(gameMechanisms)
       .innerJoin(games, eq(games.id, gameMechanisms.gameId))
       .where(eq(gameMechanisms.mechanismId, id))

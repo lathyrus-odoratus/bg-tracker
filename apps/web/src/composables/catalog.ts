@@ -20,10 +20,12 @@ export function useGames() {
   return useQuery({ queryKey: ['games'], queryFn: () => unwrap(api.games.$get()) })
 }
 
+/** id 是空字串時不查（例如首頁還沒選取） */
 export function useGame(id: MaybeRefOrGetter<string>) {
   return useQuery({
     queryKey: ['games', computed(() => toValue(id))],
     queryFn: () => unwrap(api.games[':id'].$get({ param: { id: toValue(id) } })),
+    enabled: computed(() => !!toValue(id)),
   })
 }
 
@@ -35,6 +37,7 @@ export function useMechanism(id: MaybeRefOrGetter<string>) {
   return useQuery({
     queryKey: ['mechanisms', computed(() => toValue(id))],
     queryFn: () => unwrap(api.mechanisms[':id'].$get({ param: { id: toValue(id) } })),
+    enabled: computed(() => !!toValue(id)),
   })
 }
 

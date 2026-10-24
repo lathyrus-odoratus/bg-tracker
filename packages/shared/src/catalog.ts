@@ -37,6 +37,9 @@ export const gameSummarySchema = z.object({
   maxPlayers: z.number().nullable(),
   playMinutes: z.number().nullable(),
   bggId: z.number().nullable(),
+  /** BGA 的遊戲代號；遊戲頁連到 `boardgamearena.com/gamepanel?game=<slug>` */
+  bgaSlug: z.string().nullable(),
+  imageUrl: z.string().nullable(),
 })
 export type GameSummary = z.infer<typeof gameSummarySchema>
 
@@ -79,11 +82,18 @@ export const mechanismListItemSchema = z.object({
 })
 export type MechanismListItem = z.infer<typeof mechanismListItemSchema>
 
+/** 遊戲標籤用：名稱加上組圖片需要的欄位 */
+export const gameRefSchema = ref.extend({
+  bgaSlug: z.string().nullable(),
+  imageUrl: z.string().nullable(),
+})
+export type GameRef = z.infer<typeof gameRefSchema>
+
 /** `GET /api/mechanisms/:id` */
 export const mechanismDetailSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  games: z.array(ref),
+  games: z.array(gameRefSchema),
 })
 export type MechanismDetail = z.infer<typeof mechanismDetailSchema>

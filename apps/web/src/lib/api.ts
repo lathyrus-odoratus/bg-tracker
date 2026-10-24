@@ -59,3 +59,9 @@ export async function unwrap<T>(
   if (!res.ok) throw await toApiError(res as unknown as Response)
   return res.json()
 }
+
+/** 沒有回應內容的請求（例如 DELETE 回 204）；失敗時丟出 ApiError */
+export async function ensureOk(request: Promise<{ ok: boolean; status: number }>): Promise<void> {
+  const res = await request
+  if (!res.ok) throw await toApiError(res as unknown as Response)
+}

@@ -1,5 +1,5 @@
 // 本機開發用的範例資料（`pnpm db:seed`）：遊戲、機制與對應。可以重複執行，已存在的會略過
-import { inArray } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { loadDatabaseUrl } from '../src/config.ts'
 import { createDb } from '../src/db/client.ts'
 import { gameMechanisms, games, mechanisms } from '../src/db/schema/index.ts'
@@ -19,37 +19,87 @@ const MECHANISMS: Record<string, string> = {
   路線建造: '在地圖上連接城市或地點',
 }
 
-const GAMES: { name: string; min: number; max: number; minutes: number; mechanisms: string[] }[] = [
+// 只放 BGA 上有的遊戲（bga = BGA 的遊戲代號，圖片從它組出來）
+const GAMES: {
+  name: string
+  bga: string
+  min: number
+  max: number
+  minutes: number
+  mechanisms: string[]
+}[] = [
   {
     name: '農家樂',
+    bga: 'agricola',
     min: 1,
     max: 4,
     minutes: 120,
     mechanisms: ['工人放置', '資源轉換', '手牌管理'],
   },
-  { name: '卡卡頌', min: 2, max: 5, minutes: 45, mechanisms: ['板塊拼放', '區域控制'] },
-  { name: '皇輿爭霸', min: 2, max: 4, minutes: 30, mechanisms: ['牌庫構築', '手牌管理'] },
-  { name: '璀璨寶石', min: 2, max: 4, minutes: 30, mechanisms: ['引擎構築', '集合收集'] },
-  { name: '七大奇蹟', min: 2, max: 7, minutes: 30, mechanisms: ['輪抽', '集合收集', '引擎構築'] },
+  {
+    name: '卡卡頌',
+    bga: 'carcassonne',
+    min: 2,
+    max: 5,
+    minutes: 45,
+    mechanisms: ['板塊拼放', '區域控制'],
+  },
+  {
+    name: '璀璨寶石',
+    bga: 'splendor',
+    min: 2,
+    max: 4,
+    minutes: 30,
+    mechanisms: ['引擎構築', '集合收集'],
+  },
+  {
+    name: '七大奇蹟',
+    bga: 'sevenwonders',
+    min: 2,
+    max: 7,
+    minutes: 30,
+    mechanisms: ['輪抽', '集合收集', '引擎構築'],
+  },
   {
     name: '展翅翱翔',
+    bga: 'wingspan',
     min: 1,
     max: 5,
     minutes: 70,
     mechanisms: ['引擎構築', '手牌管理', '資源轉換'],
   },
-  { name: '聖胡安', min: 2, max: 4, minutes: 60, mechanisms: ['角色選擇', '引擎構築', '手牌管理'] },
-  { name: '波多黎各', min: 3, max: 5, minutes: 120, mechanisms: ['角色選擇', '資源轉換'] },
-  { name: '上流社會', min: 3, max: 5, minutes: 20, mechanisms: ['拍賣競標', '手牌管理'] },
+  {
+    name: '波多黎各',
+    bga: 'puertorico',
+    min: 3,
+    max: 5,
+    minutes: 120,
+    mechanisms: ['角色選擇', '資源轉換'],
+  },
   {
     name: '鐵道任務',
+    bga: 'tickettoride',
     min: 2,
     max: 5,
     minutes: 60,
     mechanisms: ['路線建造', '集合收集', '手牌管理'],
   },
-  { name: '石器時代', min: 2, max: 4, minutes: 90, mechanisms: ['工人放置', '資源轉換'] },
-  { name: '殖民火星', min: 1, max: 5, minutes: 120, mechanisms: ['引擎構築', '輪抽', '手牌管理'] },
+  {
+    name: '石器時代',
+    bga: 'stoneage',
+    min: 2,
+    max: 4,
+    minutes: 90,
+    mechanisms: ['工人放置', '資源轉換'],
+  },
+  {
+    name: '殖民火星',
+    bga: 'terraformingmars',
+    min: 1,
+    max: 5,
+    minutes: 120,
+    mechanisms: ['引擎構築', '輪抽', '手牌管理'],
+  },
 ]
 
 const { db, close } = createDb(loadDatabaseUrl(), { max: 1 })
@@ -69,6 +119,14 @@ await db.transaction(async (tx) => {
       })),
     )
     .onConflictDoNothing()
+
+  // 已存在的遊戲（例如之前的 seed 建的）補上 BGA 代號，不覆蓋手動改過的
+  for (const g of GAMES) {
+    await tx
+      .update(games)
+      .set({ bgaSlug: g.bga })
+      .where(and(eq(games.name, g.name), isNull(games.bgaSlug)))
+  }
 
   const gameIds = new Map(
     (

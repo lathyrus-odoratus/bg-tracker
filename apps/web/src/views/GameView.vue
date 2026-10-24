@@ -2,12 +2,16 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGame, useMyGameStats } from '../composables/catalog.ts'
+import { useSessionStore } from '../stores/session.ts'
 import { formatDate, formatPlayers } from '../lib/format.ts'
+import { bgaGameUrl } from '../lib/bga.ts'
+import GameCover from '../components/GameCover.vue'
 
 const route = useRoute()
 const id = computed(() => String(route.params.id))
 const { data: game, isPending, error } = useGame(id)
 const my = useMyGameStats()
+const session = useSessionStore()
 const myStat = computed(() => my.value.stats.get(id.value))
 const facts = computed(() =>
   game.value
@@ -24,19 +28,52 @@ const facts = computed(() =>
     <p v-if="isPending" class="text-muted">載入中…</p>
     <p v-else-if="error" class="text-danger">找不到這款遊戲。</p>
     <template v-else-if="game">
-      <header class="grid gap-1">
-        <h1 class="text-2xl font-black">{{ game.name }}</h1>
-        <p v-if="facts.length" class="text-muted">{{ facts.join(' · ') }}</p>
-        <p class="text-sm text-muted">
-          <template v-if="my.loggedIn">
-            我玩過 {{ myStat?.playCount ?? 0 }} 次
-            <template v-if="myStat?.lastPlayedAt">
-              · 上次 {{ formatDate(myStat.lastPlayedAt) }}
+      <GameCover v-if="game.bgaSlug && !game.imageUrl" :game="game" kind="bannerTitle" />
+      <header class="flex flex-wrap items-start gap-5">
+        <GameCover :game="game" kind="box280" width="10rem" />
+        <div class="grid min-w-60 flex-1 content-start gap-1">
+          <div class="flex items-baseline justify-between gap-3">
+            <h1 class="text-2xl font-black">{{ game.name }}</h1>
+            <RouterLink
+              v-if="session.isAdmin"
+              :to="`/admin/games/${game.id}/edit`"
+              class="text-sm font-medium text-accent"
+            >
+              編輯
+            </RouterLink>
+          </div>
+          <p v-if="facts.length" class="text-muted">{{ facts.join(' · ') }}</p>
+          <p class="text-sm text-muted">
+            <template v-if="my.loggedIn">
+              我玩過 {{ myStat?.playCount ?? 0 }} 次
+              <template v-if="myStat?.lastPlayedAt">
+                · 上次 {{ formatDate(myStat.lastPlayedAt) }}
+              </template>
             </template>
-          </template>
-          <template v-else>登入後顯示你的遊玩紀錄</template>
-          · {{ myStat?.wished ? '★ 我想玩' : '☆ 還沒標想玩' }}
-        </p>
+            <template v-else>登入後顯示你的遊玩紀錄</template>
+            · {{ myStat?.wished ? '★ 我想玩' : '☆ 還沒標想玩' }}
+          </p>
+          <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium">
+            <a
+              v-if="game.bgaSlug"
+              :href="bgaGameUrl(game.bgaSlug)"
+              target="_blank"
+              rel="noopener"
+              class="text-accent hover:underline"
+            >
+              在 BGA 上玩 ↗
+            </a>
+            <a
+              v-if="game.bggId"
+              :href="`https://boardgamegeek.com/boardgame/${game.bggId}`"
+              target="_blank"
+              rel="noopener"
+              class="text-accent hover:underline"
+            >
+              BGG 頁面 ↗
+            </a>
+          </p>
+        </div>
       </header>
 
       <section class="grid gap-2">
@@ -73,7 +110,7 @@ const facts = computed(() =>
         </div>
       </section>
 
-      <section class="grid gap-2">
+      <section id="plays" class="grid scroll-mt-4 gap-2">
         <h2 class="font-bold">遊玩紀錄</h2>
         <p v-if="!game.plays.length" class="text-sm text-muted">還沒有紀錄。</p>
         <ul v-else class="grid gap-2">

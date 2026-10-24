@@ -1,14 +1,40 @@
 <script setup lang="ts">
-import CircleGraph from '../components/CircleGraph.vue'
+import { computed, nextTick, useTemplateRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import CircleGraph, { type Selection } from '../components/CircleGraph.vue'
+import GamePanel from '../components/GamePanel.vue'
+import MechanismPanel from '../components/MechanismPanel.vue'
 import TopWishes from '../components/TopWishes.vue'
 import { useGraph, useMyGameStats } from '../composables/catalog.ts'
 
+const route = useRoute()
+const router = useRouter()
 const { data: graph, isPending, isError } = useGraph()
 const my = useMyGameStats()
+
+/** 選取的節點放在網址（?game=… 或 ?mechanism=…），可以分享，上一頁也回得去 */
+const selected = computed<Selection | null>(() => {
+  const { game, mechanism } = route.query
+  if (typeof game === 'string') return { kind: 'game', id: game }
+  if (typeof mechanism === 'string') return { kind: 'mechanism', id: mechanism }
+  return null
+})
+
+function select(next: Selection | null) {
+  void router.push({ query: next ? { [next.kind]: next.id } : {} })
+}
+
+// 窄螢幕的面板在圖下方：選取後捲到面板，不然看不到詳情
+const panel = useTemplateRef<HTMLElement>('panel')
+watch(selected, async (next) => {
+  if (!next || window.matchMedia('(min-width: 64rem)').matches) return
+  await nextTick()
+  panel.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+})
 </script>
 
 <template>
-  <div class="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
+  <div class="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
     <section class="grid min-w-0 content-start gap-3">
       <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h1 class="text-2xl font-black">遊戲與機制</h1>
@@ -21,18 +47,42 @@ const my = useMyGameStats()
           </li>
         </ul>
       </div>
+      <p class="text-sm text-muted">移到節點上點亮相關的連線，點一下在旁邊看詳情。</p>
       <p v-if="isPending" class="text-muted">載入中…</p>
       <p v-else-if="isError" class="text-danger">載入失敗，請重新整理。</p>
       <p v-else-if="graph && graph.games.length === 0" class="text-muted">還沒有任何遊戲。</p>
-      <CircleGraph v-else-if="graph" :graph="graph" :my="my" />
+      <CircleGraph v-else-if="graph" :graph="graph" :selected="selected" @select="select" />
       <p class="text-sm text-muted">
         也可以用列表瀏覽：
         <RouterLink to="/games" class="text-accent">全部遊戲</RouterLink> ·
         <RouterLink to="/mechanisms" class="text-accent">全部機制</RouterLink>
       </p>
     </section>
-    <aside>
-      <TopWishes />
+
+    <!-- 窄螢幕選取時先保留一個畫面高，面板還在載入時也捲得過去 -->
+    <aside
+      ref="panel"
+      class="scroll-mt-4 lg:sticky lg:top-6 lg:self-start"
+      :class="{ 'max-lg:min-h-[calc(100dvh-2rem)]': selected }"
+    >
+      <div v-if="selected" class="rounded-2xl bg-card p-4 shadow-card">
+        <GamePanel
+          v-if="selected.kind === 'game'"
+          :id="selected.id"
+          :key="selected.id"
+          :my="my"
+          @select="select"
+          @close="select(null)"
+        />
+        <MechanismPanel
+          v-else
+          :id="selected.id"
+          :key="selected.id"
+          @select="select"
+          @close="select(null)"
+        />
+      </div>
+      <TopWishes v-else />
     </aside>
   </div>
 </template>

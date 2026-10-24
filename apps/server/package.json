@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:check": "scripts/db-check.sh",
     "db:migrate": "node --env-file-if-exists=../../.env scripts/migrate.ts",
-    "db:seed": "node --env-file-if-exists=../../.env scripts/seed.ts"
+    "db:seed": "node --env-file-if-exists=../../.env scripts/seed.ts",
+    "bga:import": "node --env-file-if-exists=../../.env scripts/bga-import.ts"
   },
   "dependencies": {
     "@bg-tracker/shared": "workspace:*",

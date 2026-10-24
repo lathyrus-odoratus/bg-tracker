@@ -17,7 +17,8 @@
     "test": "pnpm -r test",
     "db:generate": "pnpm --filter @bg-tracker/server db:generate",
     "db:migrate": "pnpm --filter @bg-tracker/server db:migrate",
-    "db:seed": "pnpm --filter @bg-tracker/server db:seed"
+    "db:seed": "pnpm --filter @bg-tracker/server db:seed",
+    "bga:import": "pnpm --filter @bg-tracker/server bga:import"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

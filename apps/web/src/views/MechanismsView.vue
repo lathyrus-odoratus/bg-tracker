@@ -1,12 +1,23 @@
 <script setup lang="ts">
+import { useSessionStore } from '../stores/session.ts'
 import { useMechanisms } from '../composables/catalog.ts'
 
 const { data, isPending, isError } = useMechanisms()
+const session = useSessionStore()
 </script>
 
 <template>
   <section class="mx-auto grid max-w-3xl gap-4">
-    <h1 class="text-2xl font-black">全部機制</h1>
+    <div class="flex items-baseline justify-between gap-3">
+      <h1 class="text-2xl font-black">全部機制</h1>
+      <RouterLink
+        v-if="session.isAdmin"
+        to="/admin/mechanisms/new"
+        class="text-sm font-medium text-accent"
+      >
+        ＋ 新增機制
+      </RouterLink>
+    </div>
     <p v-if="isPending" class="text-muted">載入中…</p>
     <p v-else-if="isError" class="text-danger">載入失敗</p>
     <ul v-else class="grid gap-2">
