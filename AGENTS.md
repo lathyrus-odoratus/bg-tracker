@@ -61,5 +61,7 @@ compose.yaml      本機 Postgres 17（對外 port 5434）
 
 ## 部署
 
-推到 `main` → CI 檢查 → `lathyrus-odoratus/dokploy-deploy` build 映像檔推到 ghcr → 打 Dokploy webhook（secret `DOKPLOY_WEBHOOK`）。
-服務、Postgres 與備份在 `~/side/personal/hobby-infra` 建立（照 `vm/services/draft/create-high-society.sh` 的寫法）。
+正式站 https://bg-tracker.miao-bao.cc 。推到 `main` → CI 檢查 → `lathyrus-odoratus/dokploy-deploy` build 映像檔推到 `ghcr.io/lathyrus-odoratus/bg-tracker` → 打 Dokploy webhook（repo secret `DOKPLOY_WEBHOOK`）。
+Dokploy 依映像檔的 `HEALTHCHECK` 判斷新版是否健康，不健康就不切流量並回滾；CI 綠燈不代表部署成功，結果看 `/api/health` 的 commit。
+服務、Postgres 與每日備份由 `~/side/personal/hobby-infra/vm/services/draft/create-bg-tracker.sh` 建立，Discord 與 admin 的 env 用同目錄的 `set-bg-tracker-env.sh` 從 stdin 設定。
+更新是 start-first（新舊版短暫同時跑），所以 migration 一定要照上面的 expand / contract。
