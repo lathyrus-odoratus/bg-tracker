@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>桌遊機制圖譜</title>
+    <!-- 畫面出來前先套用主題，避免重新整理時閃一下另一個主題（key 與 src/composables/theme.ts 相同） -->
+    <script>
+      try {
+        const theme = localStorage.getItem('bgt:theme')
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+      } catch {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

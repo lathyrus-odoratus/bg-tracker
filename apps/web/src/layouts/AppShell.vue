@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '../stores/session.ts'
+import ThemeSwitch from '../components/ThemeSwitch.vue'
 
 const session = useSessionStore()
 const router = useRouter()
@@ -27,12 +28,15 @@ async function logout() {
           留言板
         </RouterLink>
       </nav>
-      <div v-if="session.me" class="flex items-center gap-3">
-        <img :src="session.me.avatarUrl" alt="" class="size-8 rounded-full" />
-        <span class="hidden text-sm font-medium sm:inline">{{ session.me.displayName }}</span>
-        <button type="button" class="text-sm text-muted hover:text-ink" @click="logout">
-          登出
-        </button>
+      <div class="flex items-center gap-3">
+        <ThemeSwitch />
+        <template v-if="session.me">
+          <img :src="session.me.avatarUrl" alt="" class="size-8 rounded-full" />
+          <span class="hidden text-sm font-medium sm:inline">{{ session.me.displayName }}</span>
+          <button type="button" class="text-sm text-muted hover:text-ink" @click="logout">
+            登出
+          </button>
+        </template>
       </div>
     </header>
     <main class="min-h-0 flex-1 px-safe py-6">

@@ -6,6 +6,7 @@ import { configureApi } from './lib/api.ts'
 import { createQueryClient } from './lib/query.ts'
 import { createAppRouter, loginPath } from './router.ts'
 import { useSessionStore } from './stores/session.ts'
+import './composables/theme.ts'
 import './style.css'
 
 const pinia = createPinia()
