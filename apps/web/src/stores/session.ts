@@ -4,7 +4,7 @@ import type { Me } from '@bg-tracker/shared'
 import { api, ApiError, unwrap } from '../lib/api.ts'
 
 /**
- * 目前身分。未登入也能逛（匿名），只是想玩清單存在瀏覽器、遊玩紀錄不能新增。
+ * 目前身分。整個網站都要登入，路由守衛在沒有身分時導到登入頁。
  */
 export const useSessionStore = defineStore('session', () => {
   const me = ref<Me | null>(null)

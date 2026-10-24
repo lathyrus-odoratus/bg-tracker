@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, useTemplateRef } from 'vue'
-import { useRoute } from 'vue-router'
+import { nextTick, ref, useTemplateRef } from 'vue'
 import { POST_MAX_LENGTH } from '@bg-tracker/shared'
 import PostItem from '../components/PostItem.vue'
 import { useCreatePost, usePosts } from '../composables/board.ts'
@@ -8,14 +7,8 @@ import { errorMessage } from '../lib/form.ts'
 import { useSessionStore } from '../stores/session.ts'
 
 const session = useSessionStore()
-const route = useRoute()
 const { posts, isPending, isError, hasNextPage, fetchNextPage, isFetchingNextPage } = usePosts()
 const create = useCreatePost()
-
-/** 未登入不跳轉：留在這頁顯示提示；按鈕直接走 Discord 授權，登入後回到這裡 */
-const loginHref = computed(
-  () => `/auth/discord/login?returnTo=${encodeURIComponent(route.fullPath)}`,
-)
 
 const content = ref('')
 const replyTo = ref<number | null>(null)
@@ -61,18 +54,7 @@ async function submit() {
   <section class="mx-auto grid max-w-2xl gap-4">
     <h1 class="text-2xl font-black">留言板</h1>
 
-    <div v-if="!session.me" class="grid gap-3 rounded-2xl bg-card p-6 shadow-card">
-      <p class="font-bold">留言板只給登入的成員使用。</p>
-      <p class="text-sm text-muted">登入後就能看留言、留言和回覆。</p>
-      <a
-        :href="loginHref"
-        class="justify-self-start rounded-xl bg-accent px-4 py-2 font-bold text-accent-ink"
-      >
-        用 Discord 登入
-      </a>
-    </div>
-
-    <template v-else>
+    <template v-if="session.me">
       <form class="grid gap-2 rounded-2xl bg-card p-4 shadow-card" @submit.prevent="submit">
         <div v-if="replyTo" class="flex items-center gap-2 text-sm">
           <button type="button" class="text-accent hover:underline" @click="jumpTo(replyTo)">

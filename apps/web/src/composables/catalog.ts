@@ -2,7 +2,6 @@ import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import type { MyGameStat } from '@bg-tracker/shared'
 import { api, unwrap } from '../lib/api.ts'
-import { readLocalWishes } from '../lib/wishes.ts'
 import { useSessionStore } from '../stores/session.ts'
 
 export function useGraph() {
@@ -41,10 +40,7 @@ export function useMechanism(id: MaybeRefOrGetter<string>) {
   })
 }
 
-/**
- * 目前身分在各遊戲的狀態。登入時從 server 取；匿名時只有瀏覽器裡的想玩清單，
- * 玩過次數是 null（表示「登入後才有」，和「玩過 0 次」不同）。
- */
+/** 目前身分在各遊戲的玩過次數、上次遊玩、想玩；沒玩過也沒想玩的遊戲不在 map 裡 */
 export function useMyGameStats() {
   const session = useSessionStore()
   const query = useQuery({
@@ -52,15 +48,7 @@ export function useMyGameStats() {
     queryFn: () => unwrap(api.me['game-stats'].$get()),
     enabled: computed(() => !!session.me),
   })
-  return computed(() => {
-    const stats = new Map<string, Omit<MyGameStat, 'playCount'> & { playCount: number | null }>()
-    if (session.me) {
-      for (const s of query.data.value ?? []) stats.set(s.gameId, s)
-      return { loggedIn: true, stats }
-    }
-    for (const gameId of readLocalWishes()) {
-      stats.set(gameId, { gameId, playCount: null, lastPlayedAt: null, wished: true })
-    }
-    return { loggedIn: false, stats }
-  })
+  return computed(() => ({
+    stats: new Map<string, MyGameStat>((query.data.value ?? []).map((s) => [s.gameId, s])),
+  }))
 }

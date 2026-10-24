@@ -90,6 +90,8 @@ async function seed() {
   return {
     alice,
     bob,
+    /** Alice 登入的 headers；整個網站都要登入，讀資料也要帶 */
+    headers: (await loginAs(db, alice)).headers,
     agricola: agricola!,
     carcassonne: carcassonne!,
     worker: worker!,
@@ -97,10 +99,28 @@ async function seed() {
   }
 }
 
-describe('GET /api/graph', () => {
-  it('匿名可讀：所有遊戲、機制與連線', async () => {
+describe('未登入', () => {
+  it('遊戲、機制、關係圖都是 401；health、config 不用登入', async () => {
     const { agricola, worker } = await seed()
-    const body = await getJson(graphSchema, '/api/graph')
+    for (const path of [
+      '/api/graph',
+      '/api/wishes/top',
+      '/api/games',
+      `/api/games/${agricola.id}`,
+      '/api/mechanisms',
+      `/api/mechanisms/${worker.id}`,
+    ]) {
+      expect((await app.request(path)).status, path).toBe(401)
+    }
+    expect((await app.request('/api/health')).status).toBe(200)
+    expect((await app.request('/api/config')).status).toBe(200)
+  })
+})
+
+describe('GET /api/graph', () => {
+  it('所有遊戲、機制與連線', async () => {
+    const { agricola, worker, headers } = await seed()
+    const body = await getJson(graphSchema, '/api/graph', headers)
     expect(body.games.map((g) => g.name).sort()).toEqual(['卡卡頌', '農家樂'])
     expect(body.mechanisms).toHaveLength(3)
     expect(body.links).toHaveLength(2)
@@ -110,14 +130,15 @@ describe('GET /api/graph', () => {
 
 describe('GET /api/wishes/top', () => {
   it('依想玩人數排序，k 限制筆數', async () => {
-    const { carcassonne } = await seed()
-    expect(await getJson(topWishSchema.array(), '/api/wishes/top?k=1')).toEqual([
+    const { carcassonne, headers } = await seed()
+    expect(await getJson(topWishSchema.array(), '/api/wishes/top?k=1', headers)).toEqual([
       { gameId: carcassonne.id, name: '卡卡頌', count: 2 },
     ])
   })
 
   it('k 超出範圍回 400', async () => {
-    const res = await app.request('/api/wishes/top?k=0')
+    const { headers } = await seed()
+    const res = await app.request('/api/wishes/top?k=0', { headers })
     expect(res.status).toBe(400)
   })
 })
@@ -156,8 +177,8 @@ describe('GET /api/me/game-stats', () => {
 
 describe('GET /api/games', () => {
   it('列出遊戲與機制數', async () => {
-    await seed()
-    const body = await getJson(gameListItemSchema.array(), '/api/games')
+    const { headers } = await seed()
+    const body = await getJson(gameListItemSchema.array(), '/api/games', headers)
     expect(body.map((g) => [g.name, g.mechanismCount])).toEqual([
       ['卡卡頌', 1],
       ['農家樂', 1],
@@ -167,8 +188,8 @@ describe('GET /api/games', () => {
 
 describe('GET /api/games/:id', () => {
   it('機制、遊玩紀錄（參與者對應到使用者）、想玩的人、玩過的人', async () => {
-    const { agricola, alice, bob } = await seed()
-    const body = await getJson(gameDetailSchema, `/api/games/${agricola.id}`)
+    const { agricola, alice, bob, headers } = await seed()
+    const body = await getJson(gameDetailSchema, `/api/games/${agricola.id}`, headers)
     expect(body).toMatchObject({ name: '農家樂', minPlayers: 1, maxPlayers: 4 })
     expect(body.mechanisms.map((m) => m.name)).toEqual(['工人放置'])
     expect(body.plays.map((p) => p.externalId)).toEqual(['2', '1'])
@@ -186,19 +207,22 @@ describe('GET /api/games/:id', () => {
   })
 
   it('不存在回 404，id 格式錯誤回 400', async () => {
-    const missing = await app.request('/api/games/00000000-0000-4000-8000-000000000000')
+    const { headers } = await seed()
+    const missing = await app.request('/api/games/00000000-0000-4000-8000-000000000000', {
+      headers,
+    })
     expect(missing.status).toBe(404)
     expect(await errorCode(missing)).toBe('not_found')
-    expect((await app.request('/api/games/nope')).status).toBe(400)
+    expect((await app.request('/api/games/nope', { headers })).status).toBe(400)
   })
 })
 
 describe('GET /api/mechanisms', () => {
   it('依使用的遊戲數排序；詳細頁列出遊戲', async () => {
-    const { worker, unused } = await seed()
-    const list = await getJson(mechanismListItemSchema.array(), '/api/mechanisms')
+    const { worker, unused, headers } = await seed()
+    const list = await getJson(mechanismListItemSchema.array(), '/api/mechanisms', headers)
     expect(list.at(-1)).toMatchObject({ id: unused.id, gameCount: 0 })
-    const detail = await getJson(mechanismDetailSchema, `/api/mechanisms/${worker.id}`)
+    const detail = await getJson(mechanismDetailSchema, `/api/mechanisms/${worker.id}`, headers)
     expect(detail).toMatchObject({ name: '工人放置', games: [{ name: '農家樂' }] })
   })
 })

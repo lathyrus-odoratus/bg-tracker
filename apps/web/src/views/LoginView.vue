@@ -28,7 +28,7 @@ const loginHref = computed(() => {
     <div class="grid w-full max-w-sm gap-5 rounded-2xl bg-card p-6 shadow-card">
       <div class="grid gap-1">
         <h1 class="text-2xl font-black">登入</h1>
-        <p class="text-sm text-muted">登入後才能登錄遊玩紀錄；想玩清單會從這台瀏覽器併入帳號。</p>
+        <p class="text-sm text-muted">桌遊機制圖譜只給成員使用，請用 Discord 登入。</p>
       </div>
       <p v-if="error" class="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">
         {{ error }}
@@ -39,7 +39,6 @@ const loginHref = computed(() => {
       >
         用 Discord 登入
       </a>
-      <RouterLink to="/" class="text-center text-sm text-muted">先匿名逛逛</RouterLink>
     </div>
   </main>
 </template>

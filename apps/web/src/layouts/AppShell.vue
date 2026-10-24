@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useSessionStore } from '../stores/session.ts'
 
 const session = useSessionStore()
-const route = useRoute()
-const loginHref = computed(() => `/login?returnTo=${encodeURIComponent(route.fullPath)}`)
+const router = useRouter()
 
+/** 整個網站都要登入：登出後回到登入頁 */
 async function logout() {
   await session.logout()
+  await router.replace('/login')
 }
 </script>
 
@@ -34,7 +34,6 @@ async function logout() {
           登出
         </button>
       </div>
-      <a v-else :href="loginHref" class="text-sm font-medium text-accent">登入</a>
     </header>
     <main class="min-h-0 flex-1 px-safe py-6">
       <slot />

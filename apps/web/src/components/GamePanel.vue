@@ -49,16 +49,13 @@ const facts = computed(() =>
     <p v-else-if="error" class="text-sm text-danger">載入失敗</p>
     <template v-else-if="game">
       <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        <template v-if="my.loggedIn">
-          <dt class="text-muted">我玩過</dt>
-          <dd>{{ stat?.playCount ?? 0 }} 次</dd>
-          <dt class="text-muted">上次遊玩</dt>
-          <dd>{{ stat?.lastPlayedAt ? formatDate(stat.lastPlayedAt) : '—' }}</dd>
-        </template>
+        <dt class="text-muted">我玩過</dt>
+        <dd>{{ stat?.playCount ?? 0 }} 次</dd>
+        <dt class="text-muted">上次遊玩</dt>
+        <dd>{{ stat?.lastPlayedAt ? formatDate(stat.lastPlayedAt) : '—' }}</dd>
         <dt class="text-muted">我想玩</dt>
         <dd>{{ stat?.wished ? '★ 想玩' : '☆ 還沒標' }}</dd>
       </dl>
-      <p v-if="!my.loggedIn" class="text-sm text-muted">登入後顯示你的遊玩紀錄。</p>
 
       <section class="grid gap-1.5">
         <h3 class="text-sm font-bold">用到的機制</h3>

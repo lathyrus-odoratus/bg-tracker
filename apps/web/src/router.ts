@@ -4,8 +4,8 @@ import { useSessionStore } from './stores/session.ts'
 
 declare module 'vue-router' {
   interface RouteMeta {
-    /** 需要登入（例如新增遊玩紀錄）；其他頁面匿名也能看 */
-    auth?: boolean
+    /** 不需要登入（只有登入頁）；其他頁面都要登入 */
+    public?: boolean
     /** 只有 admin 進得去 */
     admin?: boolean
     /** 不顯示外殼（登入頁等） */
@@ -33,9 +33,8 @@ export function createAppRouter(pinia: Pinia): Router {
       {
         path: '/login',
         component: () => import('./views/LoginView.vue'),
-        meta: { bare: true },
+        meta: { public: true, bare: true },
       },
-      // 未登入不跳轉，頁面自己顯示需要登入的提示
       { path: '/board', component: () => import('./views/BoardView.vue') },
       { path: '/games', component: () => import('./views/GamesView.vue') },
       { path: '/games/:id', component: () => import('./views/GameView.vue') },
@@ -68,8 +67,10 @@ export function createAppRouter(pinia: Pinia): Router {
   router.beforeEach(async (to) => {
     const session = useSessionStore(pinia)
     const me = await session.load()
-    if ((to.meta.auth || to.meta.admin) && !me) return loginPath(to.fullPath)
-    if (to.meta.admin && me?.systemRole !== 'admin') return { path: '/not-found' }
+    // 整個網站都要登入；已登入再進登入頁就回首頁
+    if (to.meta.public) return me && to.path === '/login' ? { path: '/' } : true
+    if (!me) return loginPath(to.fullPath)
+    if (to.meta.admin && me.systemRole !== 'admin') return { path: '/not-found' }
     return true
   })
   return router

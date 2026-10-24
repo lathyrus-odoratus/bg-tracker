@@ -13,6 +13,7 @@ import {
 import type { AppEnv } from '../env.ts'
 import { AppError } from '../errors.ts'
 import { validate } from '../http/validate.ts'
+import { requireAuth } from '../auth/middleware.ts'
 import { gameMechanisms, games, mechanisms, users, wishes } from '../db/schema/index.ts'
 import { listGamePlayers, listGamePlays } from '../plays/queries.ts'
 
@@ -27,9 +28,12 @@ const gameColumns = {
   imageUrl: games.imageUrl,
 }
 
-/** 遊戲與機制：匿名也能讀 */
+/**
+ * 遊戲與機制：整個網站都要登入。掛在 API 根路徑，所以 requireAuth 掛在每個 route 上
+ * （用 `.use('*')` 會連 /api/health、/api/config 一起擋掉）
+ */
 export const catalogRoutes = new Hono<AppEnv>()
-  .get('/graph', async (c) => {
+  .get('/graph', requireAuth, async (c) => {
     const { db } = c.get('deps')
     const [gameRows, mechanismRows, links] = await Promise.all([
       db.select({ id: games.id, name: games.name }).from(games).orderBy(asc(games.name)),
@@ -44,7 +48,7 @@ export const catalogRoutes = new Hono<AppEnv>()
     const body: Graph = { games: gameRows, mechanisms: mechanismRows, links }
     return c.json(body)
   })
-  .get('/wishes/top', validate('query', topWishesQuerySchema), async (c) => {
+  .get('/wishes/top', requireAuth, validate('query', topWishesQuerySchema), async (c) => {
     const { db } = c.get('deps')
     const { k } = c.req.valid('query')
     const rows = await db
@@ -57,7 +61,7 @@ export const catalogRoutes = new Hono<AppEnv>()
     const body: TopWish[] = rows
     return c.json(body)
   })
-  .get('/games', async (c) => {
+  .get('/games', requireAuth, async (c) => {
     const { db } = c.get('deps')
     const rows = await db
       .select({ ...gameColumns, mechanismCount: count(gameMechanisms.mechanismId) })
@@ -68,7 +72,7 @@ export const catalogRoutes = new Hono<AppEnv>()
     const body: GameListItem[] = rows
     return c.json(body)
   })
-  .get('/games/:id', validate('param', idParamSchema), async (c) => {
+  .get('/games/:id', requireAuth, validate('param', idParamSchema), async (c) => {
     const { db } = c.get('deps')
     const { id } = c.req.valid('param')
     const [game] = await db.select(gameColumns).from(games).where(eq(games.id, id))
@@ -92,7 +96,7 @@ export const catalogRoutes = new Hono<AppEnv>()
     const body: GameDetail = { ...game, mechanisms: mechanismRows, plays, wishers, players }
     return c.json(body)
   })
-  .get('/mechanisms', async (c) => {
+  .get('/mechanisms', requireAuth, async (c) => {
     const { db } = c.get('deps')
     const rows = await db
       .select({
@@ -108,7 +112,7 @@ export const catalogRoutes = new Hono<AppEnv>()
     const body: MechanismListItem[] = rows
     return c.json(body)
   })
-  .get('/mechanisms/:id', validate('param', idParamSchema), async (c) => {
+  .get('/mechanisms/:id', requireAuth, validate('param', idParamSchema), async (c) => {
     const { db } = c.get('deps')
     const { id } = c.req.valid('param')
     const [mechanism] = await db

@@ -14,11 +14,11 @@ const router = createAppRouter(pinia)
 
 configureApi({
   onUnauthorized: async () => {
-    // 登入中的 session 過期：需要登入的頁面回到登入頁，其他頁面改成匿名繼續看
+    // 使用中 session 過期：整個網站都要登入，回到登入頁，登入後回到原本的頁面
     if (!session.me) return
     session.me = null
     const current = router.currentRoute.value
-    if (current.meta.auth || current.meta.admin) await router.replace(loginPath(current.fullPath))
+    if (!current.meta.public) await router.replace(loginPath(current.fullPath))
   },
 })
 

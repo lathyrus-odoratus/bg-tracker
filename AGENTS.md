@@ -39,7 +39,7 @@ compose.yaml      本機 Postgres 17（對外 port 5434）
 2. 在 `apps/server/src/` 對應模組寫 route，用 method chaining 掛到 `app.ts` 的 API router（型別才會傳到 `ApiType`）。
 3. 掛上權限 middleware；body 用 `validate('json', schema)`。
    - 所有 `/api/*` 都已經過 `loadSession`（讀 cookie、寫入請求檢查 Origin），route 只要再掛需要的檢查：`requireAuth`、`requireSystemRole('admin')`。
-   - 匿名可以讀的 route 不掛 `requireAuth`；「我玩過幾次」這類個人化欄位在未登入時回 null。
+   - 整個網站都要登入：資料 route 一律掛 `requireAuth`，只有 `/api/health`、`/api/config` 與登入流程公開。掛在 API 根路徑的 router 不能用 `.use('*', requireAuth)`（會連公開的 route 一起擋），要掛在每個 route 上。
    - route 內用 `currentUser(c)` 取得目前使用者；角色每個請求從 DB 讀，不要快取。
 4. 寫 server 測試（Vitest + 真的 Postgres）：`useTestDb()`、`createTestDeps({ db })`、`createTestUser(db)`、`loginAs(db, user)`。
 5. 前端用 `api.<路徑>.$get()` 等呼叫，型別自動帶入。

@@ -44,13 +44,10 @@ const facts = computed(() =>
           </div>
           <p v-if="facts.length" class="text-muted">{{ facts.join(' · ') }}</p>
           <p class="text-sm text-muted">
-            <template v-if="my.loggedIn">
-              我玩過 {{ myStat?.playCount ?? 0 }} 次
-              <template v-if="myStat?.lastPlayedAt">
-                · 上次 {{ formatDate(myStat.lastPlayedAt) }}
-              </template>
+            我玩過 {{ myStat?.playCount ?? 0 }} 次
+            <template v-if="myStat?.lastPlayedAt">
+              · 上次 {{ formatDate(myStat.lastPlayedAt) }}
             </template>
-            <template v-else>登入後顯示你的遊玩紀錄</template>
             · {{ myStat?.wished ? '★ 我想玩' : '☆ 還沒標想玩' }}
           </p>
           <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium">
