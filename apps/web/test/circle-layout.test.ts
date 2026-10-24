@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { circleLayout, connectedKeys, labelTransform } from '../src/lib/circle-layout.ts'
+import {
+  circleLayout,
+  connectedKeys,
+  hitAreaPath,
+  labelTransform,
+} from '../src/lib/circle-layout.ts'
 
 const graph = {
   games: [
@@ -26,6 +31,13 @@ describe('circleLayout', () => {
       if (n.kind === 'game') expect(n.x).toBeGreaterThan(0)
       else expect(n.x).toBeLessThan(0)
     }
+  })
+
+  it('同一半圈的點擊區角度平均分、相鄰剛好接上', () => {
+    const games = nodes.filter((n) => n.kind === 'game')
+    const [a, b] = games
+    expect(a!.angle + a!.slot / 2).toBeCloseTo(b!.angle - b!.slot / 2)
+    expect(hitAreaPath(a!, 90, 180)).toMatch(/^M.*Z$/)
   })
 
   it('略過指向不存在節點的連線', () => {

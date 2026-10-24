@@ -4,6 +4,7 @@ import type { Graph } from '@bg-tracker/shared'
 import {
   circleLayout,
   connectedKeys,
+  hitAreaPath,
   labelTransform,
   type LayoutNode,
   type NodeKind,
@@ -38,6 +39,9 @@ onMounted(() => {
 onBeforeUnmount(() => observer?.disconnect())
 
 const radius = computed(() => Math.max(60, size.value / 2 - LABEL_SPACE))
+/** 點擊區從圓點內側一點開始，到標籤可用空間的外緣 */
+const hitInner = computed(() => radius.value - 14)
+const hitOuter = computed(() => radius.value + LABEL_SPACE - 4)
 const layout = computed(() => circleLayout(props.graph, radius.value))
 
 /** hover／鍵盤 focus 暫時點亮；沒有的話點亮選取的節點 */
@@ -118,15 +122,8 @@ function select(n: LayoutNode) {
           @keydown.enter.prevent="select(node)"
           @keydown.space.prevent="select(node)"
         >
-          <!-- 比圓點大的透明命中區 -->
-          <line
-            :x1="node.x"
-            :y1="node.y"
-            :x2="node.x * ((radius + LABEL_SPACE - 8) / radius)"
-            :y2="node.y * ((radius + LABEL_SPACE - 8) / radius)"
-            stroke="transparent"
-            stroke-width="18"
-          />
+          <!-- 點擊區：節點分到的那一格扇形；hover／鍵盤 focus 時描出虛線 -->
+          <path :d="hitAreaPath(node, hitInner, hitOuter)" class="hit" />
           <circle :cx="node.x" :cy="node.y" r="4.5" class="dot" />
           <text
             :transform="labelTransform(node, radius, LABEL_OFFSET).transform"
@@ -165,6 +162,17 @@ function select(n: LayoutNode) {
 .node {
   cursor: pointer;
   outline: none;
+}
+.hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.node:hover .hit,
+.node:focus-visible .hit {
+  fill: color-mix(in srgb, var(--ink) 4%, transparent);
+  stroke: var(--muted);
 }
 .dot {
   stroke: var(--card);

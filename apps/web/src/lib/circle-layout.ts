@@ -1,4 +1,4 @@
-import { curveBundle, line } from 'd3-shape'
+import { arc, curveBundle, line } from 'd3-shape'
 import type { Graph } from '@bg-tracker/shared'
 
 export type NodeKind = 'game' | 'mechanism'
@@ -9,6 +9,8 @@ export interface LayoutNode {
   name: string
   /** 角度（弧度），0 在正上方、順時針 */
   angle: number
+  /** 這個節點分到的角度寬（同一半圈平均分），點擊區的扇形用 */
+  slot: number
   x: number
   y: number
 }
@@ -34,13 +36,15 @@ export function circleLayout(graph: Graph, radius: number): CircleLayout {
   const place = (kind: NodeKind, items: Graph['games'], start: number): LayoutNode[] => {
     const span = Math.PI - 2 * GAP
     const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'))
+    const slot = span / sorted.length
     return sorted.map((item, i) => {
-      const angle = start + GAP + ((i + 0.5) * span) / sorted.length
+      const angle = start + GAP + (i + 0.5) * slot
       return {
         kind,
         id: item.id,
         name: item.name,
         angle,
+        slot,
         x: radius * Math.sin(angle),
         y: -radius * Math.cos(angle),
       }
@@ -83,4 +87,16 @@ export function connectedKeys(graph: Graph, kind: NodeKind, id: string): Set<str
     if (kind === 'mechanism' && link.mechanismId === id) keys.add(`game:${link.gameId}`)
   }
   return keys
+}
+
+/** 點擊區的扇形：角度是節點分到的那一格，半徑從圓點內側到標籤外緣，相鄰節點剛好接上 */
+export function hitAreaPath(node: LayoutNode, innerRadius: number, outerRadius: number) {
+  return (
+    arc()({
+      innerRadius,
+      outerRadius,
+      startAngle: node.angle - node.slot / 2,
+      endAngle: node.angle + node.slot / 2,
+    }) ?? ''
+  )
 }
