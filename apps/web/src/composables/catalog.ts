@@ -1,6 +1,6 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import type { MyGameStat } from '@bg-tracker/shared'
+import type { GameDetail, MyGameStat } from '@bg-tracker/shared'
 import { api, unwrap } from '../lib/api.ts'
 import { useSessionStore } from '../stores/session.ts'
 
@@ -84,6 +84,24 @@ export function useToggleMark() {
         client.invalidateQueries({ queryKey: ['games', stat.gameId] }),
         client.invalidateQueries({ queryKey: ['wishes', 'top'] }),
       ])
+    },
+  })
+}
+
+/** 評重度（weight 為 null 時取消）；成功後直接更新遊戲詳情裡的重度 */
+export function useSetWeight() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ gameId, weight }: { gameId: string; weight: number | null }) => {
+      const route = api.me.weights[':id']
+      return unwrap(
+        weight === null
+          ? route.$delete({ param: { id: gameId } })
+          : route.$put({ param: { id: gameId }, json: { weight } }),
+      )
+    },
+    onSuccess: (weight, { gameId }) => {
+      client.setQueryData<GameDetail>(['games', gameId], (old) => (old ? { ...old, weight } : old))
     },
   })
 }

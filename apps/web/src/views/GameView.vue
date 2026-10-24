@@ -7,6 +7,7 @@ import { formatDate, formatPlayers } from '../lib/format.ts'
 import { bgaGameUrl } from '../lib/bga.ts'
 import GameCover from '../components/GameCover.vue'
 import MarkToggles from '../components/MarkToggles.vue'
+import WeightSlider from '../components/WeightSlider.vue'
 
 const route = useRoute()
 const id = computed(() => String(route.params.id))
@@ -70,6 +71,8 @@ const facts = computed(() =>
           </p>
         </div>
       </header>
+
+      <WeightSlider :key="game.id" :game-id="game.id" :weight="game.weight" />
 
       <section class="grid gap-2">
         <h2 class="font-bold">用到的機制</h2>

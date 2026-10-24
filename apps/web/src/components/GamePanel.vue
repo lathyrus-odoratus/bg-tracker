@@ -50,6 +50,16 @@ const facts = computed(() =>
     <p v-else-if="error" class="text-sm text-danger">載入失敗</p>
     <template v-else-if="game">
       <MarkToggles :game-id="game.id" :stat="stat" />
+      <p class="text-sm text-muted">
+        重度
+        <template v-if="game.weight.average !== null">
+          <span class="font-bold text-ink tabular-nums">{{ game.weight.average.toFixed(1) }}</span>
+          （{{ game.weight.count }} 人評分<template v-if="game.weight.mine !== null"
+            >，我 {{ game.weight.mine.toFixed(1) }}</template
+          >）
+        </template>
+        <template v-else>還沒有人評</template>
+      </p>
       <p v-if="stat?.lastPlayedAt" class="text-sm text-muted">
         上次遊玩 {{ formatDate(stat.lastPlayedAt) }}
       </p>

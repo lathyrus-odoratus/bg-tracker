@@ -10,7 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
-import { createdAt, id, inList, tstz } from './columns.ts'
+import { createdAt, id, inList, tstz, updatedAt } from './columns.ts'
 import { users } from './identity.ts'
 import { games } from './catalog.ts'
 
@@ -128,5 +128,33 @@ export const playedMarks = pgTable(
   (t) => [
     primaryKey({ columns: [t.userId, t.gameId] }),
     index('played_marks_game_id').on(t.gameId),
+  ],
+)
+
+/** 重度範圍 1.0–9.9、間距 0.1；存成整數十分位（10–99），避免小數誤差 */
+export const WEIGHT_MIN_TENTHS = 10
+export const WEIGHT_MAX_TENTHS = 99
+
+/** 玩家替遊戲評的複雜度（重度），每人每款一票，可以改、可以取消 */
+export const weightVotes = pgTable(
+  'weight_votes',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    gameId: uuid('game_id')
+      .notNull()
+      .references(() => games.id, { onDelete: 'restrict' }),
+    weightTenths: integer('weight_tenths').notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.gameId] }),
+    index('weight_votes_game_id').on(t.gameId),
+    check(
+      'weight_votes_range',
+      sql`"weight_tenths" BETWEEN ${sql.raw(String(WEIGHT_MIN_TENTHS))} AND ${sql.raw(String(WEIGHT_MAX_TENTHS))}`,
+    ),
   ],
 )

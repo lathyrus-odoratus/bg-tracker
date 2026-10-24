@@ -29,6 +29,13 @@
       "when": 1792880810201,
       "tag": "0003_played_marks",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792883127779,
+      "tag": "0004_weight_votes",
+      "breakpoints": true
     }
   ]
 }

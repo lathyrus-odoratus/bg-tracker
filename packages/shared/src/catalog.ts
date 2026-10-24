@@ -71,6 +71,27 @@ export const playSchema = z.object({
 })
 export type Play = z.infer<typeof playSchema>
 
+export const WEIGHT_MIN = 1
+export const WEIGHT_MAX = 9.9
+export const WEIGHT_STEP = 0.1
+
+/** `PUT /api/me/weights/:id`：重度 1.0–9.9、間距 0.1 */
+export const weightInputSchema = z.object({
+  weight: z
+    .number()
+    .min(WEIGHT_MIN)
+    .max(WEIGHT_MAX)
+    .refine((w) => Math.abs(w * 10 - Math.round(w * 10)) < 1e-6, '間距是 0.1'),
+})
+
+/** 遊戲的重度：大家的平均（小數一位）、評分人數、我的評分 */
+export const weightSummarySchema = z.object({
+  average: z.number().nullable(),
+  count: z.number(),
+  mine: z.number().nullable(),
+})
+export type WeightSummary = z.infer<typeof weightSummarySchema>
+
 /** `GET /api/games/:id` */
 export const gameDetailSchema = gameSummarySchema.extend({
   mechanisms: z.array(ref),
@@ -78,6 +99,7 @@ export const gameDetailSchema = gameSummarySchema.extend({
   wishers: z.array(userRef),
   /** 玩過的人：有遊玩紀錄或自己標了玩過；只有標記的 playCount 是 0 */
   players: z.array(userRef.extend({ playCount: z.number() })),
+  weight: weightSummarySchema,
 })
 export type GameDetail = z.infer<typeof gameDetailSchema>
 

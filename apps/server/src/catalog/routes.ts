@@ -13,9 +13,10 @@ import {
 import type { AppEnv } from '../env.ts'
 import { AppError } from '../errors.ts'
 import { validate } from '../http/validate.ts'
-import { requireAuth } from '../auth/middleware.ts'
+import { currentUser, requireAuth } from '../auth/middleware.ts'
 import { gameMechanisms, games, mechanisms, users, wishes } from '../db/schema/index.ts'
 import { listGamePlayers, listGamePlays } from '../plays/queries.ts'
+import { getWeightSummary } from '../plays/weights.ts'
 
 const gameColumns = {
   id: games.id,
@@ -93,7 +94,8 @@ export const catalogRoutes = new Hono<AppEnv>()
         .orderBy(asc(wishes.createdAt)),
       listGamePlayers(db, id),
     ])
-    const body: GameDetail = { ...game, mechanisms: mechanismRows, plays, wishers, players }
+    const weight = await getWeightSummary(db, id, currentUser(c).id)
+    const body: GameDetail = { ...game, mechanisms: mechanismRows, plays, wishers, players, weight }
     return c.json(body)
   })
   .get('/mechanisms', requireAuth, async (c) => {

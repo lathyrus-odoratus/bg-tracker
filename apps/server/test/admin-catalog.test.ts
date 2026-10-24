@@ -7,6 +7,7 @@ import {
   mechanisms,
   playedMarks,
   plays,
+  weightVotes,
   wishes,
 } from '../src/db/schema/index.ts'
 import { useTestDb } from './helpers/db.ts'
@@ -106,6 +107,9 @@ describe('管理：遊戲', () => {
     await db.insert(gameMechanisms).values({ gameId: highSociety!.id, mechanismId: m!.id })
     await db.insert(wishes).values({ userId: admin.id, gameId: highSociety!.id })
     await db.insert(playedMarks).values({ userId: admin.id, gameId: highSociety!.id })
+    await db
+      .insert(weightVotes)
+      .values({ userId: admin.id, gameId: highSociety!.id, weightTenths: 25 })
     await db.insert(plays).values({
       gameId: played!.id,
       playedAt: new Date(),
@@ -122,6 +126,7 @@ describe('管理：遊戲', () => {
     expect(await db.select().from(games).where(eq(games.id, highSociety!.id))).toHaveLength(0)
     expect(await db.select().from(wishes)).toHaveLength(0)
     expect(await db.select().from(playedMarks)).toHaveLength(0)
+    expect(await db.select().from(weightVotes)).toHaveLength(0)
 
     const blocked = await app.request(`/api/admin/games/${played!.id}`, {
       method: 'DELETE',

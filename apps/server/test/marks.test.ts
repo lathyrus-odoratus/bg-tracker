@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { gameDetailSchema, myGameStatSchema } from '@bg-tracker/shared'
+import { gameDetailSchema, myGameStatSchema, weightSummarySchema } from '@bg-tracker/shared'
 import { createApp } from '../src/app.ts'
 import { games } from '../src/db/schema/index.ts'
 import { useTestDb } from './helpers/db.ts'
@@ -52,5 +52,52 @@ describe('想玩、玩過標記', () => {
     const { call, game } = await setup()
     expect((await call('PUT', 'played', '00000000-0000-4000-8000-000000000000')).status).toBe(404)
     expect((await app.request(`/api/me/wishes/${game.id}`, { method: 'PUT' })).status).toBe(401)
+  })
+})
+
+describe('重度評分', () => {
+  async function vote(headers: Record<string, string>, gameId: string, weight: unknown) {
+    const res = await app.request(`/api/me/weights/${gameId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ weight }),
+      headers: { ...headers, 'content-type': 'application/json' },
+    })
+    return { status: res.status, body: res.ok ? weightSummarySchema.parse(await res.json()) : null }
+  }
+
+  it('每人一票可以改；平均取小數一位；取消後回到沒評', async () => {
+    const { headers, game } = await setup()
+    const bob = await createTestUser(db, { displayName: 'Bob' })
+    const bobHeaders = (await loginAs(db, bob)).headers
+
+    expect((await vote(headers, game.id, 2.5)).body).toEqual({ average: 2.5, count: 1, mine: 2.5 })
+    expect((await vote(headers, game.id, 3.1)).body).toEqual({ average: 3.1, count: 1, mine: 3.1 })
+    // (3.1 + 4.4) / 2 = 3.75 → 3.8
+    expect((await vote(bobHeaders, game.id, 4.4)).body).toEqual({
+      average: 3.8,
+      count: 2,
+      mine: 4.4,
+    })
+
+    const detail = gameDetailSchema.parse(
+      await (await app.request(`/api/games/${game.id}`, { headers })).json(),
+    )
+    expect(detail.weight).toEqual({ average: 3.8, count: 2, mine: 3.1 })
+
+    const cleared = await app.request(`/api/me/weights/${game.id}`, { method: 'DELETE', headers })
+    expect(weightSummarySchema.parse(await cleared.json())).toEqual({
+      average: 4.4,
+      count: 1,
+      mine: null,
+    })
+  })
+
+  it('範圍 1.0–9.9、間距 0.1，其他 400；兩端可以', async () => {
+    const { headers, game } = await setup()
+    for (const bad of [0.9, 10, 5.55, '5', null]) {
+      expect((await vote(headers, game.id, bad)).status, String(bad)).toBe(400)
+    }
+    expect((await vote(headers, game.id, 1)).status).toBe(200)
+    expect((await vote(headers, game.id, 9.9)).body?.mine).toBe(9.9)
   })
 })

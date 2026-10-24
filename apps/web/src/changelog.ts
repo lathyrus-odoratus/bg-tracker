@@ -20,6 +20,16 @@ export const BACKLOG: string[] = [
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.5.0',
+    date: '2026-10-25',
+    changes: [
+      {
+        kind: '新增',
+        text: '在遊戲頁用 slider 評遊戲的重度（複雜度，1.0–9.9），顯示大家的平均與評分人數',
+      },
+    ],
+  },
+  {
     version: '0.4.0',
     date: '2026-10-25',
     changes: [
