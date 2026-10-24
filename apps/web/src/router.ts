@@ -27,6 +27,10 @@ export function createAppRouter(pinia: Pinia): Router {
         component: () => import('./views/LoginView.vue'),
         meta: { bare: true },
       },
+      { path: '/games', component: () => import('./views/GamesView.vue') },
+      { path: '/games/:id', component: () => import('./views/GameView.vue') },
+      { path: '/mechanisms', component: () => import('./views/MechanismsView.vue') },
+      { path: '/mechanisms/:id', component: () => import('./views/MechanismView.vue') },
       { path: '/:pathMatch(.*)*', component: () => import('./views/NotFoundView.vue') },
     ],
   })
