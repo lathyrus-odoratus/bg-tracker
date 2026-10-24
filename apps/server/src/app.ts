@@ -11,6 +11,7 @@ import { adminCatalogRoutes } from './admin/catalog.ts'
 import { boardRoutes } from './board/routes.ts'
 import { markRoutes } from './plays/mark-routes.ts'
 import { bgaRoutes } from './bga/routes.ts'
+import { memberGameRoutes } from './catalog/member-routes.ts'
 
 export interface AppOptions {
   /** web 的 build 輸出目錄；不給就不提供 SPA（例如測試） */
@@ -24,6 +25,7 @@ function createApiRoutes() {
     .route('/me', meRoutes)
     .route('/me', markRoutes)
     .route('/', catalogRoutes)
+    .route('/games', memberGameRoutes)
     .route('/admin', adminCatalogRoutes)
     .route('/posts', boardRoutes)
     .route('/bga', bgaRoutes)

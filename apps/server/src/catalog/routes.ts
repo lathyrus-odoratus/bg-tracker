@@ -27,6 +27,7 @@ const gameColumns = {
   bggId: games.bggId,
   bgaSlug: games.bgaSlug,
   imageUrl: games.imageUrl,
+  needsReview: games.needsReview,
 }
 
 /**

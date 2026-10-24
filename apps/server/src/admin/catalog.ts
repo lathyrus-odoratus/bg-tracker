@@ -10,7 +10,7 @@ import type { AppEnv } from '../env.ts'
 import type { Tx } from '../db/client.ts'
 import { AppError } from '../errors.ts'
 import { validate } from '../http/validate.ts'
-import { requireAuth, requireSystemRole } from '../auth/middleware.ts'
+import { currentUser, requireAuth, requireSystemRole } from '../auth/middleware.ts'
 import {
   gameMechanisms,
   games,
@@ -67,7 +67,10 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
     const input = c.req.valid('json')
     const id = await mapUnique(() =>
       db.transaction(async (tx) => {
-        const [game] = await tx.insert(games).values(gameFields(input)).returning({ id: games.id })
+        const [game] = await tx
+          .insert(games)
+          .values({ ...gameFields(input), createdBy: currentUser(c).id })
+          .returning({ id: games.id })
         await setMechanisms(tx, game!.id, input.mechanismIds)
         return game!.id
       }),
@@ -98,6 +101,19 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
       return c.json({ id })
     },
   )
+  // admin review：只是確認，清掉「需要 admin review」標記
+  .post('/games/:id/review', validate('param', idParamSchema), async (c) => {
+    const { db } = c.get('deps')
+    const { id } = c.req.valid('param')
+    const updated = await db
+      .update(games)
+      .set({ needsReview: false })
+      .where(eq(games.id, id))
+      .returning({ id: games.id })
+    if (!updated.length) throw new AppError('not_found', 404, 'Game not found')
+    c.get('log').info({ gameId: id }, 'game reviewed')
+    return c.json({ id })
+  })
   .delete('/games/:id', validate('param', idParamSchema), async (c) => {
     const { db } = c.get('deps')
     const { id } = c.req.valid('param')

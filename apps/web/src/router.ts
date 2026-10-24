@@ -38,6 +38,7 @@ export function createAppRouter(pinia: Pinia): Router {
       { path: '/changelog', component: () => import('./views/ChangelogView.vue') },
       { path: '/board', component: () => import('./views/BoardView.vue') },
       { path: '/games', component: () => import('./views/GamesView.vue') },
+      { path: '/games/new', component: () => import('./views/AddGameView.vue') },
       { path: '/games/:id', component: () => import('./views/GameView.vue') },
       { path: '/mechanisms', component: () => import('./views/MechanismsView.vue') },
       { path: '/mechanisms/:id', component: () => import('./views/MechanismView.vue') },

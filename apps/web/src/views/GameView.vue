@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGame, useMyGameStats } from '../composables/catalog.ts'
 import { useSessionStore } from '../stores/session.ts'
@@ -8,12 +8,33 @@ import { bgaGameUrl } from '../lib/bga.ts'
 import GameCover from '../components/GameCover.vue'
 import MarkToggles from '../components/MarkToggles.vue'
 import WeightSlider from '../components/WeightSlider.vue'
+import ReviewBadge from '../components/ReviewBadge.vue'
+import { api, ensureOk } from '../lib/api.ts'
+import { errorMessage } from '../lib/form.ts'
+import { useInvalidateCatalog } from '../composables/admin.ts'
 
 const route = useRoute()
 const id = computed(() => String(route.params.id))
 const { data: game, isPending, error } = useGame(id)
 const my = useMyGameStats()
 const session = useSessionStore()
+const invalidate = useInvalidateCatalog()
+
+/** admin review：只是確認，清掉「需要 admin review」 */
+const reviewing = ref(false)
+const reviewError = ref('')
+async function markReviewed() {
+  reviewing.value = true
+  reviewError.value = ''
+  try {
+    await ensureOk(api.admin.games[':id'].review.$post({ param: { id: id.value } }))
+    await invalidate()
+  } catch (err) {
+    reviewError.value = errorMessage(err)
+  } finally {
+    reviewing.value = false
+  }
+}
 const myStat = computed(() => my.value.stats.get(id.value))
 const facts = computed(() =>
   game.value
@@ -35,7 +56,10 @@ const facts = computed(() =>
         <GameCover :game="game" kind="box280" width="10rem" />
         <div class="grid min-w-60 flex-1 content-start gap-1">
           <div class="flex items-baseline justify-between gap-3">
-            <h1 class="text-2xl font-black">{{ game.name }}</h1>
+            <h1 class="flex flex-wrap items-center gap-x-3 text-2xl font-black">
+              {{ game.name }}
+              <ReviewBadge v-if="game.needsReview" />
+            </h1>
             <RouterLink
               v-if="session.isAdmin"
               :to="`/admin/games/${game.id}/edit`"
@@ -45,6 +69,22 @@ const facts = computed(() =>
             </RouterLink>
           </div>
           <p v-if="facts.length" class="text-muted">{{ facts.join(' · ') }}</p>
+          <div
+            v-if="game.needsReview && session.isAdmin"
+            class="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-line px-3 py-2 text-sm"
+          >
+            <span class="text-muted">成員新增的遊戲：看過名稱與機制後確認。</span>
+            <RouterLink :to="`/admin/games/${game.id}/edit`" class="text-accent">編輯</RouterLink>
+            <button
+              type="button"
+              :disabled="reviewing"
+              class="rounded-lg bg-ink px-3 py-0.5 font-bold text-bg disabled:opacity-50"
+              @click="markReviewed"
+            >
+              確認
+            </button>
+            <span v-if="reviewError" class="text-danger" role="alert">{{ reviewError }}</span>
+          </div>
           <MarkToggles :game-id="game.id" :stat="myStat" class="mt-1" />
           <p v-if="myStat?.lastPlayedAt" class="text-sm text-muted">
             上次遊玩 {{ formatDate(myStat.lastPlayedAt) }}

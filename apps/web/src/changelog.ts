@@ -20,6 +20,14 @@ export const BACKLOG: string[] = [
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.6.0',
+    date: '2026-10-25',
+    changes: [
+      { kind: '新增', text: '大家都能用 BGA 代號新增遊戲：先查詢預覽，名稱與人數從 BGA 帶入' },
+      { kind: '新增', text: '成員新增的遊戲標記「需要 admin review」，admin 在遊戲頁確認後拿掉' },
+    ],
+  },
+  {
     version: '0.5.0',
     date: '2026-10-25',
     changes: [

@@ -46,3 +46,11 @@ export const bgaLookupSchema = z.object({
 export type BgaLookup = z.infer<typeof bgaLookupSchema>
 
 export const bgaSlugParamSchema = z.object({ slug: z.string().regex(/^[a-z0-9]+$/) })
+
+/** `POST /api/games`：成員只能用 BGA 代號新增；名稱、人數、BGG id 由 server 向 BGA 查 */
+export const memberGameInputSchema = z.object({
+  bgaSlug: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9]+$/),
+})

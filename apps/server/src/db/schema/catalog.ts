@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
+  boolean,
   check,
   index,
   integer,
@@ -10,6 +11,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core'
 import { createdAt, id, updatedAt } from './columns.ts'
+import { users } from './identity.ts'
 
 /** 桌遊。名稱不分大小寫唯一 */
 export const games = pgTable(
@@ -27,6 +29,10 @@ export const games = pgTable(
     bgaSlug: text('bga_slug'),
     /** 自訂圖片；沒有的話用 BGA 代號組出 BGA 的圖片 */
     imageUrl: text('image_url'),
+    /** 成員用 BGA 代號新增的遊戲要等 admin 確認（只是確認用，不影響顯示） */
+    needsReview: boolean('needs_review').notNull().default(false),
+    /** 誰新增的；seed 與舊資料沒有 */
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'restrict' }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

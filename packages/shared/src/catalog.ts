@@ -46,6 +46,8 @@ export const gameSummarySchema = z.object({
   /** BGA 的遊戲代號；遊戲頁連到 `boardgamearena.com/gamepanel?game=<slug>` */
   bgaSlug: z.string().nullable(),
   imageUrl: z.string().nullable(),
+  /** 成員用 BGA 代號新增、等 admin 確認 */
+  needsReview: z.boolean(),
 })
 export type GameSummary = z.infer<typeof gameSummarySchema>
 

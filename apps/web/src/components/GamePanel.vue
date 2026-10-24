@@ -5,6 +5,7 @@ import { formatDate, formatPlayers } from '../lib/format.ts'
 import type { Selection } from './CircleGraph.vue'
 import GameCover from './GameCover.vue'
 import MarkToggles from './MarkToggles.vue'
+import ReviewBadge from './ReviewBadge.vue'
 import { bgaGameUrl } from '../lib/bga.ts'
 
 const props = defineProps<{ id: string; my: ReturnType<typeof useMyGameStats>['value'] }>()
@@ -34,6 +35,7 @@ const facts = computed(() =>
           <span class="size-2 rounded-full bg-game" />遊戲
         </span>
         <h2 class="text-xl font-black">{{ game?.name ?? '…' }}</h2>
+        <ReviewBadge v-if="game?.needsReview" class="justify-self-start" />
         <p v-if="facts.length" class="text-sm text-muted">{{ facts.join(' · ') }}</p>
       </div>
       <button
