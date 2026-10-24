@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { postRevisionSchema, postSchema } from '@bg-tracker/shared'
+import {
+  POSTS_PAGE_SIZE,
+  postRevisionSchema,
+  postSchema,
+  postsPageSchema,
+} from '@bg-tracker/shared'
+import { postRevisions, posts } from '../src/db/schema/index.ts'
 import { createApp } from '../src/app.ts'
 import { useTestDb } from './helpers/db.ts'
 import { createTestDeps } from './helpers/deps.ts'
@@ -25,7 +31,7 @@ describe('留言板', () => {
     expect((await app.request('/api/posts/1/revisions')).status).toBe(401)
   })
 
-  it('留言與回覆在同一層，依編號排序', async () => {
+  it('留言與回覆在同一層，新的在前', async () => {
     const alice = await login('Alice')
     const bob = await login('Bob')
     const first = postSchema.parse(
@@ -41,13 +47,37 @@ describe('留言板', () => {
     const reply = await post(bob.headers, { content: '七大奇蹟', replyTo: first.number })
     expect(reply.status).toBe(201)
 
-    const list = postSchema
-      .array()
-      .parse(await (await app.request('/api/posts', { headers: bob.headers })).json())
-    expect(list.map((p) => [p.number, p.replyTo, p.author.displayName])).toEqual([
-      [1, null, 'Alice'],
+    const page = postsPageSchema.parse(
+      await (await app.request('/api/posts', { headers: bob.headers })).json(),
+    )
+    expect(page.posts.map((p) => [p.number, p.replyTo, p.author.displayName])).toEqual([
       [2, 1, 'Bob'],
+      [1, null, 'Alice'],
     ])
+    expect(page.nextBefore).toBeNull()
+  })
+
+  it('一次 25 則，用 nextBefore 載入更早的', async () => {
+    const { user, headers } = await login('Alice')
+    const total = POSTS_PAGE_SIZE + 3
+    const rows = await db
+      .insert(posts)
+      .values(
+        Array.from({ length: total }, (_, i) => ({ authorId: user.id, content: `第 ${i + 1} 則` })),
+      )
+      .returning({ id: posts.id, content: posts.content })
+    await db.insert(postRevisions).values(rows.map((r) => ({ postId: r.id, content: r.content })))
+
+    const get = async (qs = '') =>
+      postsPageSchema.parse(await (await app.request(`/api/posts${qs}`, { headers })).json())
+    const first = await get()
+    expect(first.posts).toHaveLength(POSTS_PAGE_SIZE)
+    expect(first.posts[0]?.number).toBe(total)
+    expect(first.nextBefore).toBe(4)
+    const second = await get(`?before=${first.nextBefore}`)
+    expect(second.posts.map((p) => p.number)).toEqual([3, 2, 1])
+    expect(second.nextBefore).toBeNull()
+    expect((await app.request('/api/posts?before=0', { headers })).status).toBe(400)
   })
 
   it('回覆不存在的留言 400；空白內容、超過 2000 字 400', async () => {

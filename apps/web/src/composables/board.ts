@@ -1,18 +1,26 @@
 import { computed } from 'vue'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { api, unwrap } from '../lib/api.ts'
 import { useSessionStore } from '../stores/session.ts'
 
 const POSTS_KEY = ['posts']
 
-/** 留言板只給登入的人：未登入不查 */
+/**
+ * 留言，新的在前，一次一頁（25 則），`fetchNextPage` 載入更早的。
+ * 留言板只給登入的人：未登入不查
+ */
 export function usePosts() {
   const session = useSessionStore()
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: POSTS_KEY,
-    queryFn: () => unwrap(api.posts.$get()),
+    queryFn: ({ pageParam }) =>
+      unwrap(api.posts.$get({ query: pageParam === null ? {} : { before: String(pageParam) } })),
+    initialPageParam: null as number | null,
+    getNextPageParam: (last) => last.nextBefore,
     enabled: computed(() => !!session.me),
   })
+  const posts = computed(() => query.data.value?.pages.flatMap((p) => p.posts) ?? [])
+  return { ...query, posts }
 }
 
 export function useCreatePost() {

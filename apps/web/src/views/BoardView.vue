@@ -9,7 +9,7 @@ import { useSessionStore } from '../stores/session.ts'
 
 const session = useSessionStore()
 const route = useRoute()
-const { data: posts, isPending, isError } = usePosts()
+const { posts, isPending, isError, hasNextPage, fetchNextPage, isFetchingNextPage } = usePosts()
 const create = useCreatePost()
 
 /** 未登入不跳轉：留在這頁顯示提示；按鈕直接走 Discord 授權，登入後回到這裡 */
@@ -29,10 +29,14 @@ async function startReply(number: number) {
   composer.value?.focus({ preventScroll: true })
 }
 
-/** 點「回覆 #N」：捲到那則並短暫標示 */
+/** 點「回覆 #N」：那則還沒載入就一頁頁往下載，找到後捲過去並短暫標示 */
 const highlighted = ref<number | null>(null)
 let highlightTimer: ReturnType<typeof setTimeout> | undefined
-function jumpTo(number: number) {
+async function jumpTo(number: number) {
+  while (!posts.value.some((p) => p.number === number) && hasNextPage.value) {
+    await fetchNextPage()
+  }
+  await nextTick()
   document.getElementById(`post-${number}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   highlighted.value = number
   clearTimeout(highlightTimer)
@@ -69,21 +73,6 @@ async function submit() {
     </div>
 
     <template v-else>
-      <p v-if="isPending" class="text-muted">載入中…</p>
-      <p v-else-if="isError" class="text-danger">載入失敗，請重新整理。</p>
-      <p v-else-if="!posts?.length" class="text-muted">還沒有留言，來寫第一則吧。</p>
-      <div v-else class="grid gap-3">
-        <PostItem
-          v-for="p in posts"
-          :key="p.number"
-          :post="p"
-          :mine="p.author.id === session.me.id"
-          :highlighted="highlighted === p.number"
-          @reply="startReply"
-          @jump="jumpTo"
-        />
-      </div>
-
       <form class="grid gap-2 rounded-2xl bg-card p-4 shadow-card" @submit.prevent="submit">
         <div v-if="replyTo" class="flex items-center gap-2 text-sm">
           <button type="button" class="text-accent hover:underline" @click="jumpTo(replyTo)">
@@ -122,6 +111,31 @@ async function submit() {
           </button>
         </div>
       </form>
+
+      <p v-if="isPending" class="text-muted">載入中…</p>
+      <p v-else-if="isError" class="text-danger">載入失敗，請重新整理。</p>
+      <p v-else-if="!posts.length" class="text-muted">還沒有留言，來寫第一則吧。</p>
+      <div v-else class="grid gap-3">
+        <PostItem
+          v-for="p in posts"
+          :key="p.number"
+          :post="p"
+          :mine="p.author.id === session.me.id"
+          :highlighted="highlighted === p.number"
+          @reply="startReply"
+          @jump="jumpTo"
+        />
+        <button
+          v-if="hasNextPage"
+          type="button"
+          :disabled="isFetchingNextPage"
+          class="justify-self-center rounded-xl border border-line px-5 py-2 text-sm font-medium text-muted hover:text-ink disabled:opacity-50"
+          @click="fetchNextPage()"
+        >
+          {{ isFetchingNextPage ? '載入中…' : '載入更多' }}
+        </button>
+        <p v-else-if="posts.length > 0" class="text-center text-sm text-muted">已經是最早的留言</p>
+      </div>
     </template>
   </section>
 </template>

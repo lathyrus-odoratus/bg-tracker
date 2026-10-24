@@ -1,11 +1,14 @@
 import { Hono } from 'hono'
-import { and, asc, count, desc, eq } from 'drizzle-orm'
+import { and, count, desc, eq, lt } from 'drizzle-orm'
 import {
+  POSTS_PAGE_SIZE,
   postEditSchema,
   postInputSchema,
   postNumberParamSchema,
+  postsQuerySchema,
   type Post,
   type PostRevision,
+  type PostsPage,
 } from '@bg-tracker/shared'
 import type { AppEnv } from '../env.ts'
 import type { Executor } from '../db/client.ts'
@@ -15,14 +18,20 @@ import { currentUser, requireAuth } from '../auth/middleware.ts'
 import { discordAvatarUrl } from '../auth/avatar.ts'
 import { postRevisions, posts, userIdentities, users } from '../db/schema/index.ts'
 
-/** 留言（含作者與編輯次數）；不給 number 就是全部，依編號由舊到新 */
-async function selectPosts(db: Executor, number?: number): Promise<Post[]> {
+/**
+ * 留言（含作者與編輯次數），依編號由新到舊。
+ * `number` 只取那一則；`before` + `limit` 取編號比 before 小的一頁
+ */
+async function selectPosts(
+  db: Executor,
+  { number, before, limit }: { number?: number; before?: number; limit?: number } = {},
+): Promise<Post[]> {
   const revisions = db
     .select({ postId: postRevisions.postId, n: count().as('n') })
     .from(postRevisions)
     .groupBy(postRevisions.postId)
     .as('revisions')
-  const rows = await db
+  const query = db
     .select({
       number: posts.id,
       replyTo: posts.replyToId,
@@ -42,8 +51,15 @@ async function selectPosts(db: Executor, number?: number): Promise<Post[]> {
       and(eq(userIdentities.userId, users.id), eq(userIdentities.provider, 'discord')),
     )
     .leftJoin(revisions, eq(revisions.postId, posts.id))
-    .where(number === undefined ? undefined : eq(posts.id, number))
-    .orderBy(asc(posts.id))
+    .where(
+      and(
+        number === undefined ? undefined : eq(posts.id, number),
+        before === undefined ? undefined : lt(posts.id, before),
+      ),
+    )
+    .orderBy(desc(posts.id))
+    .$dynamic()
+  const rows = await (limit === undefined ? query : query.limit(limit))
   return rows.map((r) => {
     const editCount = Math.max(0, Number(r.revisionCount ?? 1) - 1)
     return {
@@ -65,8 +81,15 @@ async function selectPosts(db: Executor, number?: number): Promise<Post[]> {
 /** 留言板：只有登入的人能看與寫；只有作者能編輯，每一版都留著 */
 export const boardRoutes = new Hono<AppEnv>()
   .use('*', requireAuth)
-  .get('/', async (c) => {
-    const body: Post[] = await selectPosts(c.get('deps').db)
+  .get('/', validate('query', postsQuerySchema), async (c) => {
+    const { before } = c.req.valid('query')
+    // 多取一則，判斷還有沒有下一頁
+    const rows = await selectPosts(c.get('deps').db, { before, limit: POSTS_PAGE_SIZE + 1 })
+    const page = rows.slice(0, POSTS_PAGE_SIZE)
+    const body: PostsPage = {
+      posts: page,
+      nextBefore: rows.length > POSTS_PAGE_SIZE ? page.at(-1)!.number : null,
+    }
     return c.json(body)
   })
   .post('/', validate('json', postInputSchema), async (c) => {
@@ -83,7 +106,7 @@ export const boardRoutes = new Hono<AppEnv>()
         .values({ authorId: author.id, replyToId: replyTo ?? null, content })
         .returning({ id: posts.id })
       await tx.insert(postRevisions).values({ postId: row!.id, content })
-      return (await selectPosts(tx, row!.id))[0]!
+      return (await selectPosts(tx, { number: row!.id }))[0]!
     })
     c.get('log').info({ postNumber: post.number }, 'post created')
     return c.json(post, 201)
@@ -112,7 +135,7 @@ export const boardRoutes = new Hono<AppEnv>()
           await tx.update(posts).set({ content }).where(eq(posts.id, number))
           await tx.insert(postRevisions).values({ postId: number, content })
         }
-        return (await selectPosts(tx, number))[0]!
+        return (await selectPosts(tx, { number }))[0]!
       })
       return c.json(post)
     },
