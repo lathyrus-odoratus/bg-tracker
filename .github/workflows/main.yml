@@ -1,0 +1,62 @@
+name: main
+
+# push 到 main：檢查 → build 映像檔推到 ghcr → 打 Dokploy 的 deploy webhook。
+# DOKPLOY_WEBHOOK 還沒設定時只推映像檔（服務在 hobby-infra 建好之後再設）。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: main-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: bg
+          POSTGRES_PASSWORD: bg
+          POSTGRES_DB: bg_tracker_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bg"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://bg:bg@localhost:5432/bg_tracker_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - name: Schema 與 migration 一致
+        run: pnpm --filter @bg-tracker/server db:check
+      - run: pnpm test
+      - run: pnpm build
+
+  deploy:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lathyrus-odoratus/dokploy-deploy@v1
+        with:
+          build-args: |
+            APP_COMMIT=${{ github.sha }}
+          webhook: ${{ secrets.DOKPLOY_WEBHOOK }}
