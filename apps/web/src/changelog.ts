@@ -20,6 +20,16 @@ export const BACKLOG: string[] = [
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.8.0',
+    date: '2026-10-25',
+    changes: [
+      {
+        kind: '新增',
+        text: '「我的設定」頁（點右上角的頭像）：可以改暱稱，也可以重設為 Discord 上的名稱',
+      },
+    ],
+  },
+  {
     version: '0.7.0',
     date: '2026-10-25',
     summary: '機制改用 BGA 的標籤，新增主題，介面可以切換成英文',

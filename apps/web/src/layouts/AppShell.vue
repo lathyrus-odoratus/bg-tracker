@@ -38,8 +38,15 @@ async function logout() {
         <LocaleSwitch />
         <ThemeSwitch />
         <template v-if="session.me">
-          <img :src="session.me.avatarUrl" alt="" class="size-8 rounded-full" />
-          <span class="hidden text-sm font-medium sm:inline">{{ session.me.displayName }}</span>
+          <RouterLink
+            to="/settings"
+            class="flex items-center gap-2 rounded-full hover:text-accent"
+            :title="$t('settings.link')"
+          >
+            <img :src="session.me.avatarUrl" alt="" class="size-8 rounded-full" />
+            <span class="hidden text-sm font-medium sm:inline">{{ session.me.displayName }}</span>
+            <span class="sr-only sm:hidden">{{ $t('settings.link') }}</span>
+          </RouterLink>
           <button type="button" class="text-sm text-muted hover:text-ink" @click="logout">
             {{ $t('app.logout') }}
           </button>

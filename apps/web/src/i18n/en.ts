@@ -209,6 +209,15 @@ const en: MessageSchema = {
     current: 'Current version',
     kind: { added: 'New', improved: 'Improved', fixed: 'Fixed' },
   },
+  settings: {
+    title: 'My settings',
+    link: 'My settings',
+    displayName: 'Nickname',
+    displayNameHelp:
+      'The name others see in play records, the board and elsewhere. Up to {max} characters.',
+    saved: 'Saved',
+    resetToDiscord: 'Reset to {name}?',
+  },
   adminGame: {
     titleNew: 'Add a game',
     titleEdit: 'Edit: {name}',

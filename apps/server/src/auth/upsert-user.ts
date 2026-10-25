@@ -1,20 +1,24 @@
 import { and, eq, ne } from 'drizzle-orm'
 import type { Db } from '../db/client.ts'
 import { userIdentities, users } from '../db/schema/index.ts'
+import { DISPLAY_NAME_MAX } from '@bg-tracker/shared'
 import type { DiscordProfile } from '../discord/client.ts'
 
-const MAX_NAME = 50
-
-/** global_name → username，超過 50 字截斷（以字元計） */
-export function initialDisplayName(profile: DiscordProfile) {
+/**
+ * Discord 上的名稱：global_name → username → id，超過 50 字截斷（以字元計）。
+ * 第一次登入時當暱稱，之後「重設為 Discord 名稱」也用它
+ */
+export function discordDisplayName(
+  profile: Pick<DiscordProfile, 'id' | 'username' | 'global_name'>,
+) {
   const name = [profile.global_name, profile.username].map((n) => n?.trim()).find((n) => n)
-  return [...(name ?? profile.id)].slice(0, MAX_NAME).join('')
+  return [...(name ?? profile.id)].slice(0, DISPLAY_NAME_MAX).join('')
 }
 
 /**
  * 登入時建立或更新使用者。
  * - 新使用者：建立 users 與 user_identities
- * - 既有使用者：只更新 username、global_name、avatar；不改 display_name
+ * - 既有使用者：只更新 username、global_name、avatar；不改 display_name（使用者可以自己改）
  * - 在 ADMIN_DISCORD_IDS 裡的人升級成 admin（只升不降）
  */
 export async function upsertDiscordUser(
@@ -53,7 +57,7 @@ export async function upsertDiscordUser(
 
     const [user] = await tx
       .insert(users)
-      .values({ displayName: initialDisplayName(profile), systemRole: isAdmin ? 'admin' : 'user' })
+      .values({ displayName: discordDisplayName(profile), systemRole: isAdmin ? 'admin' : 'user' })
       .returning({ id: users.id })
     // 同一個帳號同時第一次登入時，第二個交易會在這裡撞到主鍵而失敗，重新登入即可
     await tx.insert(userIdentities).values({

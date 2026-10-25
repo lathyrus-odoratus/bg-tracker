@@ -211,6 +211,15 @@ const zhTW = {
     current: '目前版本',
     kind: { added: '新增', improved: '改進', fixed: '修正' },
   },
+  settings: {
+    title: '我的設定',
+    link: '我的設定',
+    displayName: '暱稱',
+    displayNameHelp: '大家在遊玩紀錄、留言板等地方看到的名字，最多 {max} 個字。',
+    saved: '已儲存',
+    /** 按了就直接重設並儲存 */
+    resetToDiscord: '重設為 {name}？',
+  },
   adminGame: {
     titleNew: '新增遊戲',
     titleEdit: '編輯：{name}',
