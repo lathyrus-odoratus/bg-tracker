@@ -17,6 +17,8 @@
   /* 圓形圖的兩類節點（已用 dataviz 的 validate_palette 驗證） */
   --game: #2a78d6;
   --mechanism: #eb6834;
+  /* 遊戲的主題標籤（「動物」「歷史」；不是介面的亮暗主題） */
+  --game-theme: #8a5cc7;
   --shadow: 0 1px 2px rgba(30, 26, 20, 0.06), 0 6px 18px rgba(30, 26, 20, 0.07);
   color-scheme: light;
 }
@@ -34,6 +36,7 @@
     --danger-soft: #3a1d19;
     --game: #3987e5;
     --mechanism: #d95926;
+    --game-theme: #a07ad6;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px rgba(0, 0, 0, 0.25);
     color-scheme: dark;
   }
@@ -51,6 +54,7 @@
   --danger-soft: #3a1d19;
   --game: #3987e5;
   --mechanism: #d95926;
+  --game-theme: #a07ad6;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px rgba(0, 0, 0, 0.25);
   color-scheme: dark;
 }
@@ -67,6 +71,7 @@
   --color-danger-soft: var(--danger-soft);
   --color-game: var(--game);
   --color-mechanism: var(--mechanism);
+  --color-game-theme: var(--game-theme);
   --shadow-card: var(--shadow);
   --font-sans: system-ui, -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
 }

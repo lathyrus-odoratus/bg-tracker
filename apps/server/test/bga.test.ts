@@ -18,6 +18,8 @@ function setup() {
     minPlayers: 2,
     maxPlayers: 4,
     bggId: 230802,
+    mechanisms: [{ tagId: 206, nameEn: 'Tile placement', nameZh: '板塊拼放' }],
+    themes: [{ tagId: 114, nameEn: 'Animals', nameZh: '動物' }],
   })
   return { bga, app: createApp(createTestDeps({ db, bga })) }
 }
@@ -27,7 +29,7 @@ async function memberHeaders() {
 }
 
 describe('GET /api/bga/:slug', () => {
-  it('登入的成員都能查：名稱、人數、BGG id', async () => {
+  it('登入的成員都能查：名稱、人數、BGG id、機制與主題標籤', async () => {
     const { app } = setup()
     const res = await app.request('/api/bga/azul', { headers: await memberHeaders() })
     expect(bgaLookupSchema.parse(await res.json())).toEqual({
@@ -37,6 +39,8 @@ describe('GET /api/bga/:slug', () => {
       minPlayers: 2,
       maxPlayers: 4,
       bggId: 230802,
+      mechanismTagIds: [206],
+      themeTagIds: [114],
     })
   })
 

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { BGA_IMAGES } from '../lib/bga.ts'
 import { LIST_IMAGE_OPTIONS, useListImage } from '../composables/image-variant.ts'
 
 const listImage = useListImage()
@@ -7,8 +6,8 @@ const listImage = useListImage()
 
 <template>
   <fieldset class="flex flex-wrap items-center gap-1.5 text-sm">
-    <legend class="sr-only">列表的遊戲圖</legend>
-    <span class="mr-1 text-muted">列表圖片（試用）：</span>
+    <legend class="sr-only">{{ $t('imageVariant.legend') }}</legend>
+    <span class="mr-1 text-muted">{{ $t('imageVariant.label') }}</span>
     <label
       v-for="key in LIST_IMAGE_OPTIONS"
       :key="key"
@@ -16,7 +15,7 @@ const listImage = useListImage()
       :class="listImage === key ? 'border-ink bg-ink text-bg' : 'border-line text-muted'"
     >
       <input v-model="listImage" type="radio" :value="key" class="sr-only" />
-      {{ BGA_IMAGES[key].label }}
+      {{ $t(`imageVariant.${key}`) }}
     </label>
   </fieldset>
 </template>

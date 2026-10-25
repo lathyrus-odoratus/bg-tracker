@@ -15,6 +15,8 @@ const props = defineProps<{
   height?: string
   /** 很小的圖（標籤裡的圖示）：圓角跟著變小 */
   small?: boolean
+  /** 顯示比例（寬 / 高）；預設用原圖比例，比原圖窄時底圖左右被裁掉 */
+  ratio?: number
 }>()
 
 const urls = computed(() => {
@@ -28,11 +30,16 @@ watch(urls, () => {
   overlayFailed.value = false
 })
 
-const style = computed(() => {
+const ratio = computed(() => {
   const { width, height } = BGA_IMAGES[props.kind]
-  const size = props.height ? { height: props.height } : { width: props.width ?? '100%' }
-  return { ...size, aspectRatio: `${width} / ${height}` }
+  return props.ratio ?? width / height
 })
+const style = computed(() => {
+  const size = props.height ? { height: props.height } : { width: props.width ?? '100%' }
+  return { ...size, aspectRatio: String(ratio.value) }
+})
+/** 標題字寬度：原圖比例（約 3.5:1）時是外層的 85%，外層越高越窄，logo 才不會撐滿 */
+const overlayWidth = computed(() => `${Math.min(85, 32.5 * ratio.value)}%`)
 </script>
 
 <template>
@@ -51,12 +58,13 @@ const style = computed(() => {
         referrerpolicy="no-referrer"
         @error="baseFailed = true"
       />
-      <!-- 標題字是正方形、logo 在中間：寬度約外層的 85%、垂直置中，上下的透明部分被外層裁掉 -->
+      <!-- 標題字是正方形、logo 在中間：置中，上下的透明部分被外層裁掉 -->
       <img
         v-if="urls.overlay && !overlayFailed"
         :src="urls.overlay"
         alt=""
-        class="absolute top-1/2 left-[7.5%] w-[85%] max-w-none -translate-y-1/2 drop-shadow"
+        class="absolute top-1/2 left-1/2 max-w-none -translate-1/2 drop-shadow"
+        :style="{ width: overlayWidth }"
         loading="lazy"
         referrerpolicy="no-referrer"
         @error="overlayFailed = true"

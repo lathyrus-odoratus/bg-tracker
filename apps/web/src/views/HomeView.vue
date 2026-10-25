@@ -53,20 +53,20 @@ watch(selected, async (next) => {
     </aside>
     <section class="grid min-w-0 content-start gap-3">
       <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h1 class="text-2xl font-black">遊戲與機制</h1>
-        <ul class="flex gap-4 text-sm text-muted" aria-label="圖例">
+        <h1 class="text-2xl font-black">{{ $t('home.title') }}</h1>
+        <ul class="flex gap-4 text-sm text-muted" :aria-label="$t('home.legend')">
           <li class="flex items-center gap-1.5">
-            <span class="size-2.5 rounded-full bg-game" />遊戲（右半圈）
+            <span class="size-2.5 rounded-full bg-game" />{{ $t('home.legendGame') }}
           </li>
           <li class="flex items-center gap-1.5">
-            <span class="size-2.5 rounded-full bg-mechanism" />機制（左半圈）
+            <span class="size-2.5 rounded-full bg-mechanism" />{{ $t('home.legendMechanism') }}
           </li>
         </ul>
       </div>
-      <p class="text-sm text-muted">移到節點上點亮相關的連線，點一下在旁邊看詳情。</p>
-      <p v-if="isPending" class="text-muted">載入中…</p>
-      <p v-else-if="isError" class="text-danger">載入失敗，請重新整理。</p>
-      <p v-else-if="graph && graph.games.length === 0" class="text-muted">還沒有任何遊戲。</p>
+      <p class="text-sm text-muted">{{ $t('home.hint') }}</p>
+      <p v-if="isPending" class="text-muted">{{ $t('common.loading') }}</p>
+      <p v-else-if="isError" class="text-danger">{{ $t('common.loadFailedReload') }}</p>
+      <p v-else-if="graph && graph.games.length === 0" class="text-muted">{{ $t('home.empty') }}</p>
       <CircleGraph
         v-else-if="graph"
         :graph="graph"
@@ -75,9 +75,10 @@ watch(selected, async (next) => {
         @select="select"
       />
       <p class="text-sm text-muted">
-        也可以用列表瀏覽：
-        <RouterLink to="/games" class="text-accent">全部遊戲</RouterLink> ·
-        <RouterLink to="/mechanisms" class="text-accent">全部機制</RouterLink>
+        {{ $t('home.browse') }}
+        <RouterLink to="/games" class="text-accent">{{ $t('games.title') }}</RouterLink> ·
+        <RouterLink to="/mechanisms" class="text-accent">{{ $t('mechanisms.title') }}</RouterLink> ·
+        <RouterLink to="/themes" class="text-accent">{{ $t('themes.title') }}</RouterLink>
       </p>
     </section>
 

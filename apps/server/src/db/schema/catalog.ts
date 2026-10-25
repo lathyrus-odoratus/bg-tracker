@@ -19,6 +19,8 @@ export const games = pgTable(
   {
     id: id(),
     name: text('name').notNull(),
+    /** 英文名稱（介面切到英文時顯示）；沒有就顯示 `name` */
+    nameEn: text('name_en'),
     minPlayers: integer('min_players'),
     maxPlayers: integer('max_players'),
     /** 一場大約幾分鐘 */
@@ -51,18 +53,24 @@ export const games = pgTable(
   ],
 )
 
-/** 機制。不分階層（圓形圖不做 edge bundling 的階層） */
+/**
+ * 機制。不分階層（圓形圖不做 edge bundling 的階層）。
+ * 名單來自 BGA 的機制標籤（`bga_tag_id`），遊戲的機制以 BGA 為準；說明由 admin 填
+ */
 export const mechanisms = pgTable(
   'mechanisms',
   {
     id: id(),
     name: text('name').notNull(),
+    nameEn: text('name_en'),
     description: text('description').notNull().default(''),
+    bgaTagId: integer('bga_tag_id'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
     uniqueIndex('mechanisms_name_lower').on(sql`lower(${t.name})`),
+    uniqueIndex('mechanisms_bga_tag_id').on(t.bgaTagId),
     check('mechanisms_name_length', sql`char_length("name") BETWEEN 1 AND 100`),
   ],
 )
@@ -80,5 +88,39 @@ export const gameMechanisms = pgTable(
   (t) => [
     primaryKey({ columns: [t.gameId, t.mechanismId] }),
     index('game_mechanisms_mechanism_id').on(t.mechanismId),
+  ],
+)
+
+/** 主題（「動物」「歷史」…）。名單來自 BGA 的主題標籤；遊戲的主題以 BGA 為準，admin 也可以改 */
+export const themes = pgTable(
+  'themes',
+  {
+    id: id(),
+    name: text('name').notNull(),
+    nameEn: text('name_en'),
+    bgaTagId: integer('bga_tag_id'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('themes_name_lower').on(sql`lower(${t.name})`),
+    uniqueIndex('themes_bga_tag_id').on(t.bgaTagId),
+    check('themes_name_length', sql`char_length("name") BETWEEN 1 AND 100`),
+  ],
+)
+
+export const gameThemes = pgTable(
+  'game_themes',
+  {
+    gameId: uuid('game_id')
+      .notNull()
+      .references(() => games.id, { onDelete: 'restrict' }),
+    themeId: uuid('theme_id')
+      .notNull()
+      .references(() => themes.id, { onDelete: 'restrict' }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.gameId, t.themeId] }),
+    index('game_themes_theme_id').on(t.themeId),
   ],
 )

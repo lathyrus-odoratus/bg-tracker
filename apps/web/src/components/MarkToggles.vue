@@ -39,7 +39,7 @@ async function set(kind: 'wishes' | 'played', on: boolean) {
         :disabled="toggle.isPending.value"
         @click="set('wishes', !wished)"
       >
-        {{ wished ? '★ 想玩' : '☆ 想玩' }}
+        {{ wished ? '★' : '☆' }} {{ $t('marks.wish') }}
       </button>
       <button
         type="button"
@@ -47,11 +47,11 @@ async function set(kind: 'wishes' | 'played', on: boolean) {
         :class="played ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:text-ink'"
         :aria-pressed="played"
         :disabled="toggle.isPending.value || hasRecords"
-        :title="hasRecords ? '有遊玩紀錄，不能取消' : undefined"
+        :title="hasRecords ? $t('marks.cannotUnplay') : undefined"
         @click="set('played', !played)"
       >
-        <template v-if="hasRecords">✓ 玩過 {{ playCount }} 次</template>
-        <template v-else>{{ played ? '✓ 玩過' : '玩過' }}</template>
+        <template v-if="hasRecords">✓ {{ $t('marks.playedTimes', playCount) }}</template>
+        <template v-else>{{ played ? '✓ ' : '' }}{{ $t('marks.played') }}</template>
       </button>
     </div>
     <p v-if="error" class="text-xs text-danger" role="alert">{{ error }}</p>

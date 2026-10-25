@@ -7,10 +7,11 @@ import { validate } from '../http/validate.ts'
 import { rateLimit } from '../http/rate-limit.ts'
 import { currentUser, requireAuth } from '../auth/middleware.ts'
 import { games } from '../db/schema/index.ts'
+import { applyBgaTags, upsertBgaTags } from './bga-tags.ts'
 
 /**
  * `POST /api/games`：登入的成員用 BGA 代號新增遊戲。
- * 名稱、人數、BGG id 由 server 向 BGA 查，不收前端的值；新增的遊戲標記「需要 admin review」。
+ * 名稱、人數、BGG id、機制與主題由 server 向 BGA 查，不收前端的值；新增的遊戲標記「需要 admin review」。
  * 會打 BGA，和查詢共用每人限流
  */
 export const memberGameRoutes = new Hono<AppEnv>().post(
@@ -39,20 +40,25 @@ export const memberGameRoutes = new Hono<AppEnv>().post(
     if (!found) throw new AppError('bga_not_found', 404, `BGA 找不到「${bgaSlug}」`)
 
     try {
-      const [game] = await db
-        .insert(games)
-        .values({
-          name: found.nameZh ?? found.nameEn,
-          bgaSlug: found.slug,
-          minPlayers: found.minPlayers,
-          maxPlayers: found.maxPlayers,
-          bggId: found.bggId,
-          needsReview: true,
-          createdBy: user.id,
-        })
-        .returning({ id: games.id })
-      c.get('log').info({ gameId: game!.id, bgaSlug }, 'game added by member')
-      return c.json({ id: game!.id }, 201)
+      const id = await db.transaction(async (tx) => {
+        const [game] = await tx
+          .insert(games)
+          .values({
+            name: found.nameZh ?? found.nameEn,
+            nameEn: found.nameEn,
+            bgaSlug: found.slug,
+            minPlayers: found.minPlayers,
+            maxPlayers: found.maxPlayers,
+            bggId: found.bggId,
+            needsReview: true,
+            createdBy: user.id,
+          })
+          .returning({ id: games.id })
+        await applyBgaTags(tx, game!.id, found, await upsertBgaTags(tx, found))
+        return game!.id
+      })
+      c.get('log').info({ gameId: id, bgaSlug }, 'game added by member')
+      return c.json({ id }, 201)
     } catch (err) {
       // 同名（不同代號）或 BGG id 撞到既有遊戲：請 admin 處理
       const cause = (err as { cause?: { code?: string } }).cause

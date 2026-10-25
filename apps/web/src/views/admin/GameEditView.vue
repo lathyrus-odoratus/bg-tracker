@@ -5,9 +5,10 @@ import type { GameInput } from '@bg-tracker/shared'
 import { api, ensureOk, unwrap } from '../../lib/api.ts'
 import { errorMessage, toIntOrNull } from '../../lib/form.ts'
 import { bgaGameUrl } from '../../lib/bga.ts'
-import { useGame, useMechanisms } from '../../composables/catalog.ts'
+import { useGame, useGameThemes, useMechanisms } from '../../composables/catalog.ts'
 import { useInvalidateCatalog } from '../../composables/admin.ts'
 import GameCover from '../../components/GameCover.vue'
+import { localName, t } from '../../i18n/index.ts'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,9 +19,11 @@ const id = computed(() => (typeof route.params.id === 'string' ? route.params.id
 const isNew = computed(() => !id.value)
 const { data: game } = useGame(id)
 const { data: allMechanisms } = useMechanisms()
+const { data: allThemes } = useGameThemes()
 
 const form = reactive({
   name: '',
+  nameEn: '',
   minPlayers: '' as string | number,
   maxPlayers: '' as string | number,
   playMinutes: '' as string | number,
@@ -28,6 +31,7 @@ const form = reactive({
   bgaSlug: '',
   imageUrl: '',
   mechanismIds: [] as string[],
+  themeIds: [] as string[],
 })
 
 watch(
@@ -36,6 +40,7 @@ watch(
     if (!g) return
     Object.assign(form, {
       name: g.name,
+      nameEn: g.nameEn ?? '',
       minPlayers: g.minPlayers ?? '',
       maxPlayers: g.maxPlayers ?? '',
       playMinutes: g.playMinutes ?? '',
@@ -43,6 +48,7 @@ watch(
       bgaSlug: g.bgaSlug ?? '',
       imageUrl: g.imageUrl ?? '',
       mechanismIds: g.mechanisms.map((m) => m.id),
+      themeIds: g.themes.map((t) => t.id),
     })
   },
   { immediate: true },
@@ -55,7 +61,8 @@ const preview = computed(() => ({
 }))
 
 /**
- * 「從 BGA 帶入」：按了才查，只填目前空著的欄位（不蓋掉手動改過的名稱等）
+ * 「從 BGA 帶入」：按了才查，只填目前空著的欄位（不蓋掉手動改過的名稱等）；
+ * 機制與主題以 BGA 為準，整份換成 BGA 上的
  */
 const slugValid = computed(() => /^[a-z0-9]+$/.test(form.bgaSlug.trim()))
 const fetchingBga = ref(false)
@@ -72,7 +79,7 @@ async function fillFromBga() {
     const kept: string[] = []
     const fill = (
       label: string,
-      key: 'name' | 'minPlayers' | 'maxPlayers' | 'bggId',
+      key: 'name' | 'nameEn' | 'minPlayers' | 'maxPlayers' | 'bggId',
       value: string | number | null,
     ) => {
       if (value === null || value === '') return
@@ -83,17 +90,38 @@ async function fillFromBga() {
         kept.push(label)
       }
     }
-    fill('名稱', 'name', bga.nameZh ?? bga.nameEn)
-    fill('最少人數', 'minPlayers', bga.minPlayers)
-    fill('最多人數', 'maxPlayers', bga.maxPlayers)
-    fill('BGG id', 'bggId', bga.bggId)
+    fill(t('adminGame.name'), 'name', bga.nameZh ?? bga.nameEn)
+    fill(t('adminGame.nameEn'), 'nameEn', bga.nameEn)
+    fill(t('adminGame.minPlayers'), 'minPlayers', bga.minPlayers)
+    fill(t('adminGame.maxPlayers'), 'maxPlayers', bga.maxPlayers)
+    fill(t('adminGame.bggId'), 'bggId', bga.bggId)
+    // 這邊還沒有的標籤（BGA 新增的）要先同步才對得到
+    const byTag = (list: { id: string; bgaTagId: number | null }[] = []) =>
+      new Map(list.map((x) => [x.bgaTagId, x.id]))
+    const mechanismByTag = byTag(allMechanisms.value)
+    const themeByTag = byTag(allThemes.value)
+    form.mechanismIds = bga.mechanismTagIds.flatMap((t) => mechanismByTag.get(t) ?? [])
+    form.themeIds = bga.themeTagIds.flatMap((t) => themeByTag.get(t) ?? [])
+    const unknown =
+      bga.mechanismTagIds.length +
+      bga.themeTagIds.length -
+      form.mechanismIds.length -
+      form.themeIds.length
+    const sep = t('common.listSep')
     bgaMessage.value = [
-      `BGA：${bga.nameZh ? `${bga.nameZh}（${bga.nameEn}）` : bga.nameEn}`,
-      filled.length ? `已帶入${filled.join('、')}` : '沒有空的欄位可以帶入',
-      kept.length ? `${kept.join('、')}已經有值，沒有覆蓋` : '',
+      t('adminGame.bgaFound', { name: bga.nameZh ? `${bga.nameZh}（${bga.nameEn}）` : bga.nameEn }),
+      filled.length
+        ? t('adminGame.filled', { fields: filled.join(sep) })
+        : t('adminGame.nothingToFill'),
+      kept.length ? t('adminGame.kept', { fields: kept.join(sep) }) : '',
+      t('adminGame.tagsReplaced', {
+        mechanisms: form.mechanismIds.length,
+        themes: form.themeIds.length,
+      }),
+      unknown > 0 ? t('adminGame.unknownTags', { n: unknown }) : '',
     ]
       .filter(Boolean)
-      .join('。')
+      .join(t('common.sentenceSep'))
   } catch (err) {
     bgaError.value = true
     bgaMessage.value = errorMessage(err)
@@ -108,6 +136,7 @@ const error = ref('')
 function input(): GameInput {
   return {
     name: form.name,
+    nameEn: form.nameEn.trim() || null,
     minPlayers: toIntOrNull(form.minPlayers),
     maxPlayers: toIntOrNull(form.maxPlayers),
     playMinutes: toIntOrNull(form.playMinutes),
@@ -115,6 +144,7 @@ function input(): GameInput {
     bgaSlug: form.bgaSlug.trim() || null,
     imageUrl: form.imageUrl.trim() || null,
     mechanismIds: form.mechanismIds,
+    themeIds: form.themeIds,
   }
 }
 
@@ -135,7 +165,7 @@ async function save() {
 }
 
 async function remove() {
-  if (!confirm(`確定刪除「${form.name}」？想玩清單裡的這款遊戲也會一起移除。`)) return
+  if (!confirm(t('adminGame.confirmDelete', { name: form.name }))) return
   error.value = ''
   try {
     await ensureOk(api.admin.games[':id'].$delete({ param: { id: id.value } }))
@@ -149,32 +179,42 @@ async function remove() {
 
 <template>
   <section class="mx-auto grid max-w-2xl gap-6">
-    <h1 class="text-2xl font-black">{{ isNew ? '新增遊戲' : `編輯：${game?.name ?? '…'}` }}</h1>
+    <h1 class="text-2xl font-black">
+      {{
+        isNew ? $t('adminGame.titleNew') : $t('adminGame.titleEdit', { name: game?.name ?? '…' })
+      }}
+    </h1>
 
     <form class="grid gap-5" @submit.prevent="save">
-      <label class="grid gap-1">
-        <span class="text-sm font-bold">名稱</span>
-        <input v-model="form.name" required maxlength="100" class="field" />
-      </label>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="grid gap-1">
+          <span class="text-sm font-bold">{{ $t('adminGame.name') }}</span>
+          <input v-model="form.name" required maxlength="100" class="field" />
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm font-bold">{{ $t('adminGame.nameEn') }}</span>
+          <input v-model="form.nameEn" maxlength="100" lang="en" class="field" />
+        </label>
+      </div>
 
       <div class="grid grid-cols-3 gap-3">
         <label class="grid gap-1">
-          <span class="text-sm font-bold">最少人數</span>
+          <span class="text-sm font-bold">{{ $t('adminGame.minPlayers') }}</span>
           <input v-model="form.minPlayers" type="number" min="1" class="field" />
         </label>
         <label class="grid gap-1">
-          <span class="text-sm font-bold">最多人數</span>
+          <span class="text-sm font-bold">{{ $t('adminGame.maxPlayers') }}</span>
           <input v-model="form.maxPlayers" type="number" min="1" class="field" />
         </label>
         <label class="grid gap-1">
-          <span class="text-sm font-bold">時長（分鐘）</span>
+          <span class="text-sm font-bold">{{ $t('adminGame.minutes') }}</span>
           <input v-model="form.playMinutes" type="number" min="1" class="field" />
         </label>
       </div>
 
       <div class="grid items-start gap-3 sm:grid-cols-2">
         <div class="grid gap-1">
-          <label for="bga-slug" class="text-sm font-bold">BGA 代號</label>
+          <label for="bga-slug" class="text-sm font-bold">{{ $t('adminGame.bgaSlug') }}</label>
           <div class="flex gap-2">
             <input
               id="bga-slug"
@@ -189,18 +229,20 @@ async function remove() {
               :disabled="!slugValid || fetchingBga"
               @click="fillFromBga"
             >
-              {{ fetchingBga ? '查詢中…' : '從 BGA 帶入' }}
+              {{ fetchingBga ? $t('addGame.looking') : $t('adminGame.fillFromBga') }}
             </button>
           </div>
           <span class="text-xs text-muted">
-            BGA 遊戲頁網址 <code>gamepanel?game=</code> 後面那段
+            <i18n-t keypath="adminGame.slugHelp">
+              <template #param><code>gamepanel?game=</code></template>
+            </i18n-t>
             <a
               v-if="form.bgaSlug"
               :href="bgaGameUrl(form.bgaSlug)"
               target="_blank"
               rel="noopener"
               class="text-accent"
-              >（開啟確認 ↗）</a
+              >{{ $t('adminGame.openToCheck') }}</a
             >
           </span>
           <p
@@ -213,16 +255,16 @@ async function remove() {
           </p>
         </div>
         <label class="grid gap-1">
-          <span class="text-sm font-bold">BGG id</span>
+          <span class="text-sm font-bold">{{ $t('adminGame.bggId') }}</span>
           <input v-model="form.bggId" type="number" min="1" class="field" />
         </label>
       </div>
 
       <div class="grid gap-2">
         <label class="grid gap-1">
-          <span class="text-sm font-bold">自訂圖片網址（選填）</span>
+          <span class="text-sm font-bold">{{ $t('adminGame.imageUrl') }}</span>
           <input v-model="form.imageUrl" type="url" placeholder="https://…" class="field" />
-          <span class="text-xs text-muted">沒填就用 BGA 的圖。</span>
+          <span class="text-xs text-muted">{{ $t('adminGame.imageHelp') }}</span>
         </label>
         <div class="flex flex-wrap items-end gap-3">
           <GameCover :game="preview" kind="box280" width="8rem" />
@@ -232,11 +274,7 @@ async function remove() {
       </div>
 
       <fieldset class="grid gap-2">
-        <legend class="text-sm font-bold">機制</legend>
-        <p class="text-xs text-muted">
-          沒有的機制先到
-          <RouterLink to="/admin/mechanisms/new" class="text-accent">新增機制</RouterLink>。
-        </p>
+        <legend class="text-sm font-bold">{{ $t('adminGame.mechanisms') }}</legend>
         <div class="flex flex-wrap gap-1.5">
           <label
             v-for="m in allMechanisms"
@@ -254,7 +292,31 @@ async function remove() {
               :value="m.id"
               class="accent-mechanism"
             />
-            {{ m.name }}
+            {{ localName(m) }}
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="grid gap-2">
+        <legend class="text-sm font-bold">{{ $t('adminGame.themes') }}</legend>
+        <div class="flex flex-wrap gap-1.5">
+          <label
+            v-for="theme in allThemes"
+            :key="theme.id"
+            class="flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-sm"
+            :class="
+              form.themeIds.includes(theme.id)
+                ? 'border-game-theme bg-card font-bold'
+                : 'border-line text-muted'
+            "
+          >
+            <input
+              v-model="form.themeIds"
+              type="checkbox"
+              :value="theme.id"
+              class="accent-game-theme"
+            />
+            {{ localName(theme) }}
           </label>
         </div>
       </fieldset>
@@ -269,11 +331,13 @@ async function remove() {
           :disabled="saving"
           class="rounded-xl bg-accent px-5 py-2 font-bold text-accent-ink disabled:opacity-50"
         >
-          {{ saving ? '儲存中…' : '儲存' }}
+          {{ saving ? $t('common.saving') : $t('common.save') }}
         </button>
-        <RouterLink :to="isNew ? '/games' : `/games/${id}`" class="text-muted">取消</RouterLink>
+        <RouterLink :to="isNew ? '/games' : `/games/${id}`" class="text-muted">{{
+          $t('common.cancel')
+        }}</RouterLink>
         <button v-if="!isNew" type="button" class="ml-auto text-sm text-danger" @click="remove">
-          刪除這款遊戲
+          {{ $t('adminGame.delete') }}
         </button>
       </div>
     </form>

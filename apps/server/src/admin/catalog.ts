@@ -1,18 +1,19 @@
 import { Hono } from 'hono'
-import { count, eq } from 'drizzle-orm'
+import { count, eq, isNotNull } from 'drizzle-orm'
 import {
   gameInputSchema,
   idParamSchema,
   mechanismInputSchema,
+  type BgaSyncResult,
   type GameInput,
 } from '@bg-tracker/shared'
 import type { AppEnv } from '../env.ts'
-import type { Tx } from '../db/client.ts'
 import { AppError } from '../errors.ts'
 import { validate } from '../http/validate.ts'
 import { currentUser, requireAuth, requireSystemRole } from '../auth/middleware.ts'
 import {
   gameMechanisms,
+  gameThemes,
   games,
   mechanisms,
   playedMarks,
@@ -20,6 +21,12 @@ import {
   weightVotes,
   wishes,
 } from '../db/schema/index.ts'
+import {
+  applyBgaTags,
+  setGameMechanisms,
+  setGameThemes,
+  upsertBgaTags,
+} from '../catalog/bga-tags.ts'
 
 /** 唯一約束 → 給管理頁看的錯誤 */
 const UNIQUE_ERRORS: Record<string, [code: string, message: string]> = {
@@ -42,24 +49,16 @@ async function mapUnique<T>(run: () => Promise<T>): Promise<T> {
     const known =
       cause?.code === '23505' && cause.constraint_name && UNIQUE_ERRORS[cause.constraint_name]
     if (known) throw new AppError(known[0], 409, known[1])
-    if (cause?.code === '23503') throw new AppError('unknown_mechanism', 400, '有機制不存在')
+    if (cause?.code === '23503') throw new AppError('unknown_tag', 400, '有機制或主題不存在')
     throw err
   }
 }
 
-function gameFields({ mechanismIds: _, ...fields }: GameInput) {
+function gameFields({ mechanismIds: _m, themeIds: _t, ...fields }: GameInput) {
   return fields
 }
 
-async function setMechanisms(tx: Tx, gameId: string, mechanismIds: string[]) {
-  await tx.delete(gameMechanisms).where(eq(gameMechanisms.gameId, gameId))
-  const unique = [...new Set(mechanismIds)]
-  if (unique.length) {
-    await tx.insert(gameMechanisms).values(unique.map((mechanismId) => ({ gameId, mechanismId })))
-  }
-}
-
-/** 遊戲與機制的新增、編輯、刪除；只有 admin */
+/** 遊戲與機制的新增、編輯、刪除，從 BGA 同步；只有 admin */
 export const adminCatalogRoutes = new Hono<AppEnv>()
   .use('*', requireAuth, requireSystemRole('admin'))
   .post('/games', validate('json', gameInputSchema), async (c) => {
@@ -71,7 +70,8 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
           .insert(games)
           .values({ ...gameFields(input), createdBy: currentUser(c).id })
           .returning({ id: games.id })
-        await setMechanisms(tx, game!.id, input.mechanismIds)
+        await setGameMechanisms(tx, game!.id, input.mechanismIds)
+        await setGameThemes(tx, game!.id, input.themeIds)
         return game!.id
       }),
     )
@@ -94,7 +94,8 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
             .where(eq(games.id, id))
             .returning({ id: games.id })
           if (!updated.length) throw new AppError('not_found', 404, 'Game not found')
-          await setMechanisms(tx, id, input.mechanismIds)
+          await setGameMechanisms(tx, id, input.mechanismIds)
+          await setGameThemes(tx, id, input.themeIds)
         }),
       )
       c.get('log').info({ gameId: id }, 'game updated')
@@ -124,6 +125,7 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
         throw new AppError('game_has_plays', 409, `這款遊戲有 ${played!.n} 筆遊玩紀錄，不能刪除`)
       }
       await tx.delete(gameMechanisms).where(eq(gameMechanisms.gameId, id))
+      await tx.delete(gameThemes).where(eq(gameThemes.gameId, id))
       await tx.delete(wishes).where(eq(wishes.gameId, id))
       await tx.delete(playedMarks).where(eq(playedMarks.gameId, id))
       await tx.delete(weightVotes).where(eq(weightVotes.gameId, id))
@@ -133,12 +135,37 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
     c.get('log').info({ gameId: id }, 'game deleted')
     return c.body(null, 204)
   })
-  .post('/mechanisms', validate('json', mechanismInputSchema), async (c) => {
-    const { db } = c.get('deps')
-    const [mechanism] = await mapUnique(() =>
-      db.insert(mechanisms).values(c.req.valid('json')).returning({ id: mechanisms.id }),
-    )
-    return c.json({ id: mechanism!.id }, 201)
+  /**
+   * 機制與主題以 BGA 為準：抓一次 BGA 全站目錄，把 BGA 新增的標籤補進來，
+   * 有代號的遊戲的機制與主題整份換成 BGA 上的；目錄裡找不到的遊戲不動。
+   * 英文名稱還沒填的順便補上
+   */
+  .post('/bga/sync', async (c) => {
+    const { db, bga } = c.get('deps')
+    const catalog = await bga.catalog()
+    const result = await db.transaction(async (tx) => {
+      const ids = await upsertBgaTags(tx, catalog)
+      const rows = await tx
+        .select({ id: games.id, bgaSlug: games.bgaSlug, nameEn: games.nameEn })
+        .from(games)
+        .where(isNotNull(games.bgaSlug))
+      const body: BgaSyncResult = { updated: 0, missing: [] }
+      for (const row of rows) {
+        const found = catalog.game(row.bgaSlug!)
+        if (!found) {
+          body.missing.push(row.bgaSlug!)
+          continue
+        }
+        await applyBgaTags(tx, row.id, found, ids)
+        if (!row.nameEn) {
+          await tx.update(games).set({ nameEn: found.nameEn }).where(eq(games.id, row.id))
+        }
+        body.updated++
+      }
+      return body
+    })
+    c.get('log').info(result, 'bga tags synced')
+    return c.json(result)
   })
   .put(
     '/mechanisms/:id',

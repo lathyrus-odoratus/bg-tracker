@@ -1,4 +1,5 @@
 import { ApiError } from './api.ts'
+import { t } from '../i18n/index.ts'
 
 /** 數字欄位：空字串 → null */
 export function toIntOrNull(value: string | number | null | undefined) {
@@ -7,13 +8,15 @@ export function toIntOrNull(value: string | number | null | undefined) {
   return Number.isInteger(n) ? n : NaN
 }
 
-/** 錯誤訊息：409 等業務錯誤用 server 的訊息；欄位驗證失敗列出欄位 */
+/** 錯誤訊息：409 等業務錯誤用 server 的訊息（只有中文）；欄位驗證失敗列出欄位 */
 export function errorMessage(err: unknown) {
-  if (!(err instanceof ApiError)) return '儲存失敗，請稍後再試'
+  if (!(err instanceof ApiError)) return t('errors.saveFailed')
   if (err.code === 'validation_failed') {
     const fields = (err.details as { fieldErrors?: Record<string, string[]> })?.fieldErrors ?? {}
     const names = Object.keys(fields)
-    return names.length ? `這些欄位格式不對：${names.join('、')}` : '欄位格式不對'
+    return names.length
+      ? t('errors.invalidFields', { fields: names.join(t('common.listSep')) })
+      : t('errors.invalid')
   }
   return err.message
 }

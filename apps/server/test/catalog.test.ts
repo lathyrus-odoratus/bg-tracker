@@ -4,9 +4,11 @@ import {
   externalAccounts,
   gameMechanisms,
   games,
+  gameThemes,
   mechanisms,
   playParticipants,
   plays,
+  themes,
   wishes,
 } from '../src/db/schema/index.ts'
 import { useTestDb } from './helpers/db.ts'
@@ -19,6 +21,8 @@ import {
   graphSchema,
   mechanismDetailSchema,
   mechanismListItemSchema,
+  themeDetailSchema,
+  themeListItemSchema,
   myGameStatSchema,
   topWishSchema,
 } from '@bg-tracker/shared'
@@ -44,7 +48,10 @@ async function seed() {
   const bob = await createTestUser(db, { displayName: 'Bob' })
   const [agricola, carcassonne] = await db
     .insert(games)
-    .values([{ name: '農家樂', minPlayers: 1, maxPlayers: 4 }, { name: '卡卡頌' }])
+    .values([
+      { name: '農家樂', minPlayers: 1, maxPlayers: 4 },
+      { name: '卡卡頌', nameEn: 'Carcassonne' },
+    ])
     .returning()
   const [worker, tile, unused] = await db
     .insert(mechanisms)
@@ -132,7 +139,7 @@ describe('GET /api/wishes/top', () => {
   it('依想玩人數排序，k 限制筆數', async () => {
     const { carcassonne, headers } = await seed()
     expect(await getJson(topWishSchema.array(), '/api/wishes/top?k=1', headers)).toEqual([
-      { gameId: carcassonne.id, name: '卡卡頌', count: 2 },
+      { gameId: carcassonne.id, name: '卡卡頌', nameEn: 'Carcassonne', count: 2 },
     ])
   })
 
@@ -228,5 +235,26 @@ describe('GET /api/mechanisms', () => {
     expect(list.at(-1)).toMatchObject({ id: unused.id, gameCount: 0 })
     const detail = await getJson(mechanismDetailSchema, `/api/mechanisms/${worker.id}`, headers)
     expect(detail).toMatchObject({ name: '工人放置', games: [{ name: '農家樂' }] })
+  })
+})
+
+describe('GET /api/themes', () => {
+  it('依使用的遊戲數排序；詳細頁列出遊戲；遊戲詳細頁列出主題；未登入 401', async () => {
+    const { agricola, headers } = await seed()
+    const [farm, unusedTheme] = await db
+      .insert(themes)
+      .values([{ name: '農業', nameEn: 'Farming' }, { name: '沒人用的主題' }])
+      .returning()
+    await db.insert(gameThemes).values({ gameId: agricola.id, themeId: farm!.id })
+    const list = await getJson(themeListItemSchema.array(), '/api/themes', headers)
+    expect(list.map((t) => [t.id, t.gameCount])).toEqual([
+      [farm!.id, 1],
+      [unusedTheme!.id, 0],
+    ])
+    const detail = await getJson(themeDetailSchema, `/api/themes/${farm!.id}`, headers)
+    expect(detail).toMatchObject({ name: '農業', games: [{ name: '農家樂' }] })
+    const game = await getJson(gameDetailSchema, `/api/games/${agricola.id}`, headers)
+    expect(game.themes).toEqual([{ id: farm!.id, name: '農業', nameEn: 'Farming' }])
+    expect((await app.request(`/api/themes/${unusedTheme!.id}`)).status).toBe(401)
   })
 })

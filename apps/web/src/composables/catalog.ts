@@ -40,6 +40,19 @@ export function useMechanism(id: MaybeRefOrGetter<string>) {
   })
 }
 
+/** 遊戲的主題標籤（`useTheme` 是介面的亮暗主題，不一樣） */
+export function useGameThemes() {
+  return useQuery({ queryKey: ['themes'], queryFn: () => unwrap(api.themes.$get()) })
+}
+
+export function useGameTheme(id: MaybeRefOrGetter<string>) {
+  return useQuery({
+    queryKey: ['themes', computed(() => toValue(id))],
+    queryFn: () => unwrap(api.themes[':id'].$get({ param: { id: toValue(id) } })),
+    enabled: computed(() => !!toValue(id)),
+  })
+}
+
 /** 目前身分在各遊戲的玩過次數、上次遊玩、想玩；沒玩過也沒想玩的遊戲不在 map 裡 */
 export function useMyGameStats() {
   const session = useSessionStore()

@@ -58,7 +58,7 @@ const history = computed(() => revisions.data.value ?? [])
         class="text-accent hover:underline"
         @click="emit('jump', post.replyTo)"
       >
-        回覆 #{{ post.replyTo }}
+        {{ $t('board.replyTo', { n: post.replyTo }) }}
       </button>
       <button
         v-if="post.editedAt"
@@ -67,7 +67,7 @@ const history = computed(() => revisions.data.value ?? [])
         :aria-expanded="showHistory"
         @click="showHistory = !showHistory"
       >
-        （已編輯 {{ post.editCount }} 次{{ showHistory ? '，收起紀錄' : '，看紀錄' }}）
+        {{ $t(showHistory ? 'post.editedOpen' : 'post.edited', post.editCount) }}
       </button>
     </header>
 
@@ -78,7 +78,7 @@ const history = computed(() => revisions.data.value ?? [])
         :maxlength="POST_MAX_LENGTH"
         required
         class="rounded-xl border border-line bg-bg px-3 py-2"
-        aria-label="編輯內容"
+        :aria-label="$t('post.editLabel')"
       />
       <p v-if="error" class="text-sm text-danger" role="alert">{{ error }}</p>
       <div class="flex gap-3 text-sm">
@@ -87,20 +87,26 @@ const history = computed(() => revisions.data.value ?? [])
           :disabled="edit.isPending.value"
           class="rounded-lg bg-accent px-3 py-1 font-bold text-accent-ink disabled:opacity-50"
         >
-          儲存
+          {{ $t('common.save') }}
         </button>
-        <button type="button" class="text-muted" @click="editing = false">取消</button>
+        <button type="button" class="text-muted" @click="editing = false">
+          {{ $t('common.cancel') }}
+        </button>
       </div>
     </form>
     <p v-else class="break-words whitespace-pre-wrap">{{ post.content }}</p>
 
-    <section v-if="showHistory" class="grid gap-2 border-t border-line pt-2" aria-label="編輯紀錄">
-      <p v-if="revisions.isPending.value" class="text-sm text-muted">載入中…</p>
+    <section
+      v-if="showHistory"
+      class="grid gap-2 border-t border-line pt-2"
+      :aria-label="$t('post.history')"
+    >
+      <p v-if="revisions.isPending.value" class="text-sm text-muted">{{ $t('common.loading') }}</p>
       <ol v-else class="grid gap-2">
         <li v-for="(rev, i) in history" :key="rev.createdAt + i" class="grid gap-0.5 text-sm">
           <span class="text-muted tabular-nums">
             {{ formatDateTime(rev.createdAt) }}
-            {{ i === 0 ? '（目前）' : i === history.length - 1 ? '（原文）' : '' }}
+            {{ i === 0 ? $t('post.current') : i === history.length - 1 ? $t('post.original') : '' }}
           </span>
           <p class="break-words whitespace-pre-wrap" :class="{ 'text-muted': i > 0 }">
             {{ rev.content }}
@@ -111,10 +117,10 @@ const history = computed(() => revisions.data.value ?? [])
 
     <footer v-if="!editing" class="flex gap-4 text-sm">
       <button type="button" class="text-accent hover:underline" @click="emit('reply', post.number)">
-        回覆
+        {{ $t('post.reply') }}
       </button>
       <button v-if="mine" type="button" class="text-muted hover:text-ink" @click="startEdit">
-        編輯
+        {{ $t('common.edit') }}
       </button>
     </footer>
   </article>

@@ -61,13 +61,14 @@ async function save(weight: number | null) {
 <template>
   <section class="grid gap-2" aria-labelledby="weight-label">
     <div class="flex flex-wrap items-baseline justify-between gap-x-3">
-      <h2 id="weight-label" class="font-bold">重度（複雜度）</h2>
+      <h2 id="weight-label" class="font-bold">{{ $t('weight.title') }}</h2>
       <p class="text-sm text-muted">
         <template v-if="weight.average !== null">
-          大家：<span class="font-bold text-ink tabular-nums">{{ weight.average.toFixed(1) }}</span>
-          （{{ weight.count }} 人評分）
+          {{ $t('weight.everyone')
+          }}<span class="font-bold text-ink tabular-nums">{{ weight.average.toFixed(1) }}</span>
+          {{ $t('weight.ratings', weight.count) }}
         </template>
-        <template v-else>還沒有人評</template>
+        <template v-else>{{ $t('weight.noRatings') }}</template>
       </p>
     </div>
     <div class="flex items-center gap-4">
@@ -88,27 +89,29 @@ async function save(weight: number | null) {
           class="w-full"
           :class="rated ? 'accent-accent' : 'accent-muted opacity-60'"
           aria-labelledby="weight-label"
-          :aria-valuetext="rated ? `我的評分 ${value.toFixed(1)}` : '還沒評分'"
+          :aria-valuetext="
+            rated ? $t('weight.mine', { value: value.toFixed(1) }) : $t('weight.unrated')
+          "
           @input="onInput"
           @change="onChange"
         />
         <!-- 刻度依數值放在對應位置（5.0 在 1.0–9.9 的約 45% 處，不是正中間） -->
         <div class="relative h-4 text-xs text-muted" aria-hidden="true">
-          <span class="absolute left-0">1.0 輕</span>
+          <span class="absolute left-0">{{ $t('weight.light') }}</span>
           <span class="absolute -translate-x-1/2" :style="{ left: `${tickPercent(5)}%` }">5.0</span>
-          <span class="absolute right-0">9.9 重</span>
+          <span class="absolute right-0">{{ $t('weight.heavy') }}</span>
         </div>
       </div>
     </div>
     <p class="flex flex-wrap items-center gap-x-3 text-sm text-muted">
       <template v-if="weight.mine !== null">
-        我的評分 {{ weight.mine.toFixed(1) }}
+        {{ $t('weight.mine', { value: weight.mine.toFixed(1) }) }}
         <button type="button" class="text-accent hover:underline" @click="save(null)">
-          取消我的評分
+          {{ $t('weight.clear') }}
         </button>
       </template>
-      <template v-else>拖動來評分，放開就會儲存</template>
-      <span v-if="setWeight.isPending.value">儲存中…</span>
+      <template v-else>{{ $t('weight.hint') }}</template>
+      <span v-if="setWeight.isPending.value">{{ $t('common.saving') }}</span>
     </p>
     <p v-if="error" class="text-sm text-danger" role="alert">{{ error }}</p>
   </section>

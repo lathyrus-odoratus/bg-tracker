@@ -1,31 +1,36 @@
 <script setup lang="ts">
 import { BACKLOG, CHANGELOG } from '../changelog.ts'
 import { useAppConfig } from '../composables/app-config.ts'
+import { locale } from '../i18n/index.ts'
 
 const { data: config } = useAppConfig()
 
-const KIND_CLASS = {
-  新增: 'bg-accent text-accent-ink',
-  改進: 'bg-ink text-bg',
-  修正: 'bg-danger text-card',
+/** 更新紀錄的內容只有中文，標籤跟著介面語言 */
+const KINDS = {
+  新增: { key: 'added', class: 'bg-accent text-accent-ink' },
+  改進: { key: 'improved', class: 'bg-ink text-bg' },
+  修正: { key: 'fixed', class: 'bg-danger text-card' },
 } as const
 </script>
 
 <template>
   <section class="mx-auto grid max-w-2xl gap-6">
-    <h1 class="text-2xl font-black">更新紀錄</h1>
+    <div class="grid gap-1">
+      <h1 class="text-2xl font-black">{{ $t('changelog.title') }}</h1>
+      <p v-if="locale === 'en'" class="text-sm text-muted">{{ $t('changelog.languageNote') }}</p>
+    </div>
 
     <section
       v-if="BACKLOG.length"
       class="grid gap-3 rounded-2xl border border-dashed border-line p-5"
       aria-labelledby="backlog"
     >
-      <h2 id="backlog" class="text-lg font-black">待辦</h2>
-      <p class="text-sm text-muted">還沒做、打算接下來做的功能。</p>
+      <h2 id="backlog" class="text-lg font-black">{{ $t('changelog.backlog') }}</h2>
+      <p class="text-sm text-muted">{{ $t('changelog.backlogIntro') }}</p>
       <ul class="grid gap-1.5">
         <li v-for="item in BACKLOG" :key="item" class="flex items-start gap-2 text-sm">
           <span class="mt-0.5 flex-none rounded border border-line px-1.5 text-xs text-muted">
-            待辦
+            {{ $t('changelog.backlog') }}
           </span>
           <span>{{ item }}</span>
         </li>
@@ -46,7 +51,7 @@ const KIND_CLASS = {
           v-if="config?.version === release.version"
           class="rounded-full border border-line px-2 text-xs text-muted"
         >
-          目前版本
+          {{ $t('changelog.current') }}
         </span>
       </header>
       <p v-if="release.summary">{{ release.summary }}</p>
@@ -54,9 +59,9 @@ const KIND_CLASS = {
         <li v-for="(c, i) in release.changes" :key="i" class="flex items-start gap-2 text-sm">
           <span
             class="mt-0.5 flex-none rounded px-1.5 text-xs font-bold"
-            :class="KIND_CLASS[c.kind]"
+            :class="KINDS[c.kind].class"
           >
-            {{ c.kind }}
+            {{ $t(`changelog.kind.${KINDS[c.kind].key}`) }}
           </span>
           <span>{{ c.text }}</span>
         </li>

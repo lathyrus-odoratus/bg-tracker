@@ -53,6 +53,13 @@ compose.yaml      本機 Postgres 17（對外 port 5434）
 
 **Expand / contract**：每個 migration 都要讓上一版程式碼還能跑（回滾時會發生）。不要在同一個 migration 裡刪除或改名欄位，也不要把既有欄位改成 `NOT NULL` 而沒有預設值。
 
+## 介面文字（i18n）
+
+- 介面文字一律放 `apps/web/src/i18n/zh-TW.ts`（基準）與 `en.ts`（型別要和繁中一致，少 key 會 typecheck 失敗），template 用 `$t('key')`，script 用 `i18n/index.ts` 匯出的 `t`。
+- `apps/web/test/i18n.test.ts` 檢查程式裡寫死的 key 都存在；組出來的 key（`` $t(`a.${x}`) ``）不檢查，自己確認。
+- 資料的名稱（遊戲、機制、主題）用 `localName(x)`：英文介面顯示 `nameEn`，沒有就顯示 `name`。
+- server 的錯誤訊息、`changelog.ts` 的內容只寫中文。
+
 ## 設定、錯誤與 log
 
 - **環境變數**：只在 `apps/server/src/config.ts` 讀（lint 會擋其他地方讀 `process.env`），同時加進 `.env.example`。前端需要的公開值放進 `GET /api/config`，不能放機密。

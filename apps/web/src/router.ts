@@ -42,6 +42,8 @@ export function createAppRouter(pinia: Pinia): Router {
       { path: '/games/:id', component: () => import('./views/GameView.vue') },
       { path: '/mechanisms', component: () => import('./views/MechanismsView.vue') },
       { path: '/mechanisms/:id', component: () => import('./views/MechanismView.vue') },
+      { path: '/themes', component: () => import('./views/ThemesView.vue') },
+      { path: '/themes/:id', component: () => import('./views/ThemeView.vue') },
       {
         path: '/admin/games/new',
         component: () => import('./views/admin/GameEditView.vue'),
@@ -50,11 +52,6 @@ export function createAppRouter(pinia: Pinia): Router {
       {
         path: '/admin/games/:id/edit',
         component: () => import('./views/admin/GameEditView.vue'),
-        meta: { admin: true },
-      },
-      {
-        path: '/admin/mechanisms/new',
-        component: () => import('./views/admin/MechanismEditView.vue'),
         meta: { admin: true },
       },
       {

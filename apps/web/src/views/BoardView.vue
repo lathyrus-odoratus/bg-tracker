@@ -52,18 +52,18 @@ async function submit() {
 
 <template>
   <section class="mx-auto grid max-w-2xl gap-4">
-    <h1 class="text-2xl font-black">留言板</h1>
+    <h1 class="text-2xl font-black">{{ $t('board.title') }}</h1>
 
     <template v-if="session.me">
       <form class="grid gap-2 rounded-2xl bg-card p-4 shadow-card" @submit.prevent="submit">
         <div v-if="replyTo" class="flex items-center gap-2 text-sm">
           <button type="button" class="text-accent hover:underline" @click="jumpTo(replyTo)">
-            回覆 #{{ replyTo }}
+            {{ $t('board.replyTo', { n: replyTo }) }}
           </button>
           <button
             type="button"
             class="text-muted hover:text-ink"
-            aria-label="取消回覆"
+            :aria-label="$t('board.cancelReply')"
             @click="replyTo = null"
           >
             ✕
@@ -75,8 +75,8 @@ async function submit() {
           rows="4"
           :maxlength="POST_MAX_LENGTH"
           required
-          placeholder="寫點什麼…"
-          aria-label="留言內容"
+          :placeholder="$t('board.placeholder')"
+          :aria-label="$t('board.contentLabel')"
           class="rounded-xl border border-line bg-bg px-3 py-2"
         />
         <p v-if="error" class="text-sm text-danger" role="alert">{{ error }}</p>
@@ -89,14 +89,14 @@ async function submit() {
             :disabled="create.isPending.value || !content.trim()"
             class="rounded-xl bg-accent px-5 py-2 font-bold text-accent-ink disabled:opacity-50"
           >
-            {{ create.isPending.value ? '送出中…' : '送出' }}
+            {{ create.isPending.value ? $t('board.submitting') : $t('board.submit') }}
           </button>
         </div>
       </form>
 
-      <p v-if="isPending" class="text-muted">載入中…</p>
-      <p v-else-if="isError" class="text-danger">載入失敗，請重新整理。</p>
-      <p v-else-if="!posts.length" class="text-muted">還沒有留言，來寫第一則吧。</p>
+      <p v-if="isPending" class="text-muted">{{ $t('common.loading') }}</p>
+      <p v-else-if="isError" class="text-danger">{{ $t('common.loadFailedReload') }}</p>
+      <p v-else-if="!posts.length" class="text-muted">{{ $t('board.empty') }}</p>
       <div v-else class="grid gap-3">
         <PostItem
           v-for="p in posts"
@@ -114,9 +114,11 @@ async function submit() {
           class="justify-self-center rounded-xl border border-line px-5 py-2 text-sm font-medium text-muted hover:text-ink disabled:opacity-50"
           @click="fetchNextPage()"
         >
-          {{ isFetchingNextPage ? '載入中…' : '載入更多' }}
+          {{ isFetchingNextPage ? $t('common.loading') : $t('board.loadMore') }}
         </button>
-        <p v-else-if="posts.length > 0" class="text-center text-sm text-muted">已經是最早的留言</p>
+        <p v-else-if="posts.length > 0" class="text-center text-sm text-muted">
+          {{ $t('board.earliest') }}
+        </p>
       </div>
     </template>
   </section>

@@ -28,6 +28,8 @@ export const bgaRoutes = new Hono<AppEnv>().use('*', requireAuth).get(
       minPlayers: game.minPlayers,
       maxPlayers: game.maxPlayers,
       bggId: game.bggId,
+      mechanismTagIds: game.mechanisms.map((t) => t.tagId),
+      themeTagIds: game.themes.map((t) => t.tagId),
     }
     return c.json(body)
   },

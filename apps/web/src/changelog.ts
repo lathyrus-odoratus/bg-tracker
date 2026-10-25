@@ -20,6 +20,24 @@ export const BACKLOG: string[] = [
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.7.0',
+    date: '2026-10-25',
+    summary: '機制改用 BGA 的標籤，新增主題，介面可以切換成英文',
+    changes: [
+      {
+        kind: '改進',
+        text: '機制名單換成 BGA 的機制標籤，遊戲的機制以 BGA 為準；admin 可以一鍵從 BGA 同步所有遊戲',
+      },
+      { kind: '新增', text: '主題（動物、歷史…）：遊戲頁顯示主題，新增主題列表與主題頁' },
+      { kind: '改進', text: '用 BGA 代號新增遊戲時，機制與主題一起帶入' },
+      {
+        kind: '新增',
+        text: '右上角可以切換中文／英文；遊戲、機制、主題的名稱也跟著換（英文名稱取自 BGA）',
+      },
+      { kind: '改進', text: '遊戲頁的橫幅改成 2:1' },
+    ],
+  },
+  {
     version: '0.6.0',
     date: '2026-10-25',
     changes: [

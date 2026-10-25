@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import type { Graph } from '@bg-tracker/shared'
+import { locale, localName } from '../i18n/index.ts'
 import {
   circleLayout,
   connectedKeys,
@@ -44,7 +45,17 @@ const radius = computed(() => Math.max(60, size.value / 2 - LABEL_SPACE))
 /** 點擊區從圓點內側一點開始，到標籤可用空間的外緣 */
 const hitInner = computed(() => radius.value - 14)
 const hitOuter = computed(() => radius.value + LABEL_SPACE - 4)
-const layout = computed(() => circleLayout(props.graph, radius.value))
+const layout = computed(() =>
+  circleLayout(
+    {
+      games: props.graph.games.map((g) => ({ id: g.id, name: localName(g) })),
+      mechanisms: props.graph.mechanisms.map((m) => ({ id: m.id, name: localName(m) })),
+      links: props.graph.links,
+    },
+    radius.value,
+    locale.value === 'en' ? 'en' : 'zh-Hant',
+  ),
+)
 
 /** hover／鍵盤 focus 暫時點亮（圖上或圖外）；沒有的話點亮選取的節點 */
 const hovered = ref<Selection | null>(null)
@@ -111,7 +122,7 @@ function select(n: LayoutNode) {
       :viewBox="`${-size / 2} ${-size / 2} ${size} ${size}`"
       class="mx-auto block"
       role="group"
-      aria-label="桌遊與機制的關係圖：右半圈是遊戲，左半圈是機制"
+      :aria-label="$t('graph.label')"
       @click.self="emit('select', null)"
     >
       <g fill="none" stroke-linecap="round" pointer-events="none">
@@ -134,7 +145,9 @@ function select(n: LayoutNode) {
           tabindex="0"
           role="button"
           :aria-pressed="nodeState(node) === 'selected'"
-          :aria-label="`${node.kind === 'game' ? '遊戲' : '機制'}：${node.name}`"
+          :aria-label="
+            $t(node.kind === 'game' ? 'graph.game' : 'graph.mechanism', { name: node.name })
+          "
           @pointerenter="onEnter($event, node)"
           @focus="onFocus($event, node)"
           @blur="hovered = null"

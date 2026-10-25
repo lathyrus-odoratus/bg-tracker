@@ -1,25 +1,18 @@
 <script setup lang="ts">
-import { useSessionStore } from '../stores/session.ts'
 import { useMechanisms } from '../composables/catalog.ts'
+import { localName } from '../i18n/index.ts'
 
 const { data, isPending, isError } = useMechanisms()
-const session = useSessionStore()
 </script>
 
 <template>
   <section class="mx-auto grid max-w-3xl gap-4">
-    <div class="flex items-baseline justify-between gap-3">
-      <h1 class="text-2xl font-black">全部機制</h1>
-      <RouterLink
-        v-if="session.isAdmin"
-        to="/admin/mechanisms/new"
-        class="text-sm font-medium text-accent"
-      >
-        ＋ 新增機制
-      </RouterLink>
+    <div class="grid gap-1">
+      <h1 class="text-2xl font-black">{{ $t('mechanisms.title') }}</h1>
+      <p class="text-sm text-muted">{{ $t('mechanisms.source') }}</p>
     </div>
-    <p v-if="isPending" class="text-muted">載入中…</p>
-    <p v-else-if="isError" class="text-danger">載入失敗</p>
+    <p v-if="isPending" class="text-muted">{{ $t('common.loading') }}</p>
+    <p v-else-if="isError" class="text-danger">{{ $t('common.loadFailed') }}</p>
     <ul v-else class="grid gap-2">
       <li v-for="m in data" :key="m.id">
         <RouterLink
@@ -27,8 +20,8 @@ const session = useSessionStore()
           class="grid gap-0.5 rounded-xl bg-card px-4 py-3 shadow-card hover:underline"
         >
           <span class="flex items-baseline justify-between gap-3">
-            <span class="font-bold">{{ m.name }}</span>
-            <span class="text-sm text-muted">{{ m.gameCount }} 款遊戲</span>
+            <span class="font-bold">{{ localName(m) }}</span>
+            <span class="text-sm text-muted">{{ $t('common.gameCount', m.gameCount) }}</span>
           </span>
           <span v-if="m.description" class="text-sm text-muted">{{ m.description }}</span>
         </RouterLink>

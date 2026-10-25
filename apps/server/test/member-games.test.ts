@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { gameDetailSchema, gameListItemSchema } from '@bg-tracker/shared'
 import { createApp } from '../src/app.ts'
-import { games } from '../src/db/schema/index.ts'
+import { games, mechanisms } from '../src/db/schema/index.ts'
 import { useTestDb } from './helpers/db.ts'
 import { createTestDeps } from './helpers/deps.ts'
 import { createTestUser, loginAs } from './helpers/auth.ts'
@@ -20,6 +20,11 @@ function setup() {
     minPlayers: 2,
     maxPlayers: 5,
     bggId: 98778,
+    mechanisms: [
+      { tagId: 215, nameEn: 'Communication', nameZh: '溝通' },
+      { tagId: 211, nameEn: 'Cooperative', nameZh: '合作' },
+    ],
+    themes: [{ tagId: 113, nameEn: 'Surreal/Silly/Absurd', nameZh: null }],
   })
   bga.add({ slug: 'nozh', nameEn: 'No Chinese Name' })
   return { bga, app: createApp(createTestDeps({ db, bga })) }
@@ -59,6 +64,29 @@ describe('成員用 BGA 代號新增遊戲', () => {
       .array()
       .parse(await (await app.request('/api/games', { headers })).json())
     expect(list[0]?.needsReview).toBe(true)
+  })
+
+  it('機制與主題從 BGA 來：已經有的標籤沿用（不蓋掉 admin 改的名稱），沒有的補上', async () => {
+    const { app } = setup()
+    const { headers } = await login()
+    const [coop] = await db
+      .insert(mechanisms)
+      .values({ name: '合作遊戲', bgaTagId: 211, description: '大家一起' })
+      .returning()
+    const res = await app.request('/api/games', {
+      method: 'POST',
+      ...jsonBody({ bgaSlug: 'hanabi' }, headers),
+    })
+    const { id } = (await res.json()) as { id: string }
+    const detail = gameDetailSchema.parse(
+      await (await app.request(`/api/games/${id}`, { headers })).json(),
+    )
+    expect(detail.mechanisms.map((m) => m.name).sort()).toEqual(['合作遊戲', '溝通'].sort())
+    expect(detail.mechanisms.find((m) => m.name === '合作遊戲')?.id).toBe(coop!.id)
+    // 沒有中文名稱的標籤用英文
+    expect(detail.themes.map((t) => t.name)).toEqual(['Surreal/Silly/Absurd'])
+    const [game] = await db.select().from(games).where(eq(games.id, id))
+    expect(game?.nameEn).toBe('Hanabi')
   })
 
   it('沒有中文名稱就用英文', async () => {
@@ -154,6 +182,7 @@ describe('admin review', () => {
       ...jsonBody(
         {
           name: '七大奇蹟',
+          nameEn: null,
           minPlayers: null,
           maxPlayers: null,
           playMinutes: null,
@@ -161,6 +190,7 @@ describe('admin review', () => {
           bgaSlug: null,
           imageUrl: null,
           mechanismIds: [],
+          themeIds: [],
         },
         admin.headers,
       ),

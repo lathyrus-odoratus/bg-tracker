@@ -1,6 +1,13 @@
 import { arc, curveBundle, line } from 'd3-shape'
 import type { Graph } from '@bg-tracker/shared'
 
+/** 排版只需要 id 與要顯示的名稱（呼叫端先換成目前語言的名稱） */
+export interface LayoutGraph {
+  games: { id: string; name: string }[]
+  mechanisms: { id: string; name: string }[]
+  links: Graph['links']
+}
+
 export type NodeKind = 'game' | 'mechanism'
 
 export interface LayoutNode {
@@ -31,11 +38,11 @@ const GAP = 0.12
 /** 連線往圓心彎的程度：1 會穿過圓心，0 是直線 */
 const BUNDLE_BETA = 0.75
 
-/** 遊戲排右半圈、機制排左半圈，依名稱排序；不做階層 */
-export function circleLayout(graph: Graph, radius: number): CircleLayout {
-  const place = (kind: NodeKind, items: Graph['games'], start: number): LayoutNode[] => {
+/** 遊戲排右半圈、機制排左半圈，依名稱排序（`lang` 決定排序規則）；不做階層 */
+export function circleLayout(graph: LayoutGraph, radius: number, lang = 'zh-Hant'): CircleLayout {
+  const place = (kind: NodeKind, items: LayoutGraph['games'], start: number): LayoutNode[] => {
     const span = Math.PI - 2 * GAP
-    const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'))
+    const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name, lang))
     const slot = span / sorted.length
     return sorted.map((item, i) => {
       const angle = start + GAP + (i + 0.5) * slot
@@ -80,7 +87,11 @@ export function labelTransform(node: LayoutNode, radius: number, offset: number)
 }
 
 /** 和某個節點直接相連的節點（含自己），用來點亮 */
-export function connectedKeys(graph: Graph, kind: NodeKind, id: string): Set<string> {
+export function connectedKeys(
+  graph: Pick<Graph, 'links'>,
+  kind: NodeKind,
+  id: string,
+): Set<string> {
   const keys = new Set([`${kind}:${id}`])
   for (const link of graph.links) {
     if (kind === 'game' && link.gameId === id) keys.add(`mechanism:${link.mechanismId}`)

@@ -6,6 +6,7 @@ import { configureApi } from './lib/api.ts'
 import { createQueryClient } from './lib/query.ts'
 import { createAppRouter, loginPath } from './router.ts'
 import { useSessionStore } from './stores/session.ts'
+import { i18n } from './i18n/index.ts'
 import './composables/theme.ts'
 import './style.css'
 
@@ -26,5 +27,6 @@ configureApi({
 createApp(App)
   .use(pinia)
   .use(router)
+  .use(i18n)
   .use(VueQueryPlugin, { queryClient: createQueryClient() })
   .mount('#app')

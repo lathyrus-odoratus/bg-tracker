@@ -3,10 +3,12 @@ import { eq } from 'drizzle-orm'
 import { createApp } from '../src/app.ts'
 import {
   gameMechanisms,
+  gameThemes,
   games,
   mechanisms,
   playedMarks,
   plays,
+  themes,
   weightVotes,
   wishes,
 } from '../src/db/schema/index.ts'
@@ -25,6 +27,7 @@ async function asAdmin() {
 
 const baseGame = {
   name: '七大奇蹟',
+  nameEn: '7 Wonders',
   minPlayers: 3,
   maxPlayers: 7,
   playMinutes: 30,
@@ -32,6 +35,7 @@ const baseGame = {
   bgaSlug: 'sevenwonders',
   imageUrl: null,
   mechanismIds: [] as string[],
+  themeIds: [] as string[],
 }
 
 describe('管理：遊戲', () => {
@@ -47,15 +51,19 @@ describe('管理：遊戲', () => {
     ).toBe(401)
   })
 
-  it('新增與編輯（機制整份取代）', async () => {
+  it('新增與編輯（機制、主題整份取代）', async () => {
     const { headers } = await asAdmin()
     const [draft, collect] = await db
       .insert(mechanisms)
       .values([{ name: '輪抽' }, { name: '集合收集' }])
       .returning()
+    const [history] = await db.insert(themes).values({ name: '歷史' }).returning()
     const created = await app.request('/api/admin/games', {
       method: 'POST',
-      ...jsonBody({ ...baseGame, mechanismIds: [draft!.id, collect!.id] }, headers),
+      ...jsonBody(
+        { ...baseGame, mechanismIds: [draft!.id, collect!.id], themeIds: [history!.id] },
+        headers,
+      ),
     })
     expect(created.status).toBe(201)
     const { id } = (await created.json()) as { id: string }
@@ -66,9 +74,14 @@ describe('管理：遊戲', () => {
     })
     expect(updated.status).toBe(200)
     const [game] = await db.select().from(games).where(eq(games.id, id))
-    expect(game).toMatchObject({ name: '七大奇蹟（新版）', bgaSlug: 'sevenwonders' })
+    expect(game).toMatchObject({
+      name: '七大奇蹟（新版）',
+      nameEn: '7 Wonders',
+      bgaSlug: 'sevenwonders',
+    })
     const links = await db.select().from(gameMechanisms).where(eq(gameMechanisms.gameId, id))
     expect(links.map((l) => l.mechanismId)).toEqual([draft!.id])
+    expect(await db.select().from(gameThemes).where(eq(gameThemes.gameId, id))).toEqual([])
   })
 
   it('名稱、BGA 代號重複回 409；人數顛倒、代號格式錯誤回 400', async () => {
@@ -138,23 +151,31 @@ describe('管理：遊戲', () => {
 })
 
 describe('管理：機制', () => {
-  it('新增、改名、名稱重複 409；有遊戲使用時不能刪', async () => {
+  it('改名與說明、名稱重複 409；有遊戲使用時不能刪；不能手動新增', async () => {
     const { headers } = await asAdmin()
-    const created = await app.request('/api/admin/mechanisms', {
-      method: 'POST',
-      ...jsonBody({ name: '工人放置', description: '' }, headers),
-    })
-    const { id } = (await created.json()) as { id: string }
+    const [worker, other] = await db
+      .insert(mechanisms)
+      .values([
+        { name: '工人放置', bgaTagId: 203 },
+        { name: '輪抽', bgaTagId: 229 },
+      ])
+      .returning()
+    const id = worker!.id
     const renamed = await app.request(`/api/admin/mechanisms/${id}`, {
       method: 'PUT',
-      ...jsonBody({ name: '工人擺放', description: '放工人執行行動' }, headers),
+      ...jsonBody({ name: '工人擺放', nameEn: 'Workers', description: '放工人執行行動' }, headers),
     })
     expect(renamed.status).toBe(200)
-    const dup = await app.request('/api/admin/mechanisms', {
-      method: 'POST',
-      ...jsonBody({ name: '工人擺放', description: '' }, headers),
+    const dup = await app.request(`/api/admin/mechanisms/${other!.id}`, {
+      method: 'PUT',
+      ...jsonBody({ name: '工人擺放', nameEn: null, description: '' }, headers),
     })
     expect(await errorCode(dup)).toBe('name_taken')
+    const create = await app.request('/api/admin/mechanisms', {
+      method: 'POST',
+      ...jsonBody({ name: '新機制', description: '' }, headers),
+    })
+    expect(create.status).toBe(404)
 
     const [game] = await db.insert(games).values({ name: '農家樂' }).returning()
     await db.insert(gameMechanisms).values({ gameId: game!.id, mechanismId: id })
