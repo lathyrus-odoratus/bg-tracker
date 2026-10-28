@@ -37,6 +37,9 @@ const loginHref = computed(() => {
       >
         {{ $t('login.button') }}
       </a>
+      <RouterLink to="/help" class="text-center text-sm text-muted hover:text-ink hover:underline">
+        {{ $t('help.fromLogin') }}
+      </RouterLink>
     </div>
   </main>
 </template>

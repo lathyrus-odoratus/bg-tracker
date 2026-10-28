@@ -140,6 +140,7 @@ function select(n: LayoutNode) {
           v-for="node in layout.nodes"
           :key="key(node)"
           class="node"
+          :data-node="key(node)"
           :data-kind="node.kind"
           :data-state="nodeState(node)"
           tabindex="0"

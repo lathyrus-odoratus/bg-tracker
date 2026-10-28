@@ -4,7 +4,7 @@ import { useSessionStore } from './stores/session.ts'
 
 declare module 'vue-router' {
   interface RouteMeta {
-    /** 不需要登入（只有登入頁）；其他頁面都要登入 */
+    /** 不需要登入（登入頁、使用說明）；其他頁面都要登入 */
     public?: boolean
     /** 只有 admin 進得去 */
     admin?: boolean
@@ -34,6 +34,13 @@ export function createAppRouter(pinia: Pinia): Router {
         path: '/login',
         component: () => import('./views/LoginView.vue'),
         meta: { public: true, bare: true },
+      },
+      // 使用說明公開：還沒加入的人也能先看看網站能做什麼
+      { path: '/help', redirect: '/help/start/welcome', meta: { public: true } },
+      {
+        path: '/help/:module/:page',
+        component: () => import('./views/HelpView.vue'),
+        meta: { public: true },
       },
       { path: '/changelog', component: () => import('./views/ChangelogView.vue') },
       { path: '/settings', component: () => import('./views/SettingsView.vue') },

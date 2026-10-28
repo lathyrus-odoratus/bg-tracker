@@ -20,6 +20,16 @@ export const BACKLOG: string[] = [
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.9.0',
+    date: '2026-10-28',
+    changes: [
+      {
+        kind: '新增',
+        text: '使用說明（右上角的「?」）：每篇介紹一個功能，附自動播放的操作示意；不用登入也能看',
+      },
+    ],
+  },
+  {
     version: '0.8.0',
     date: '2026-10-25',
     changes: [

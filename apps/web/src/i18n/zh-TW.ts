@@ -220,6 +220,166 @@ const zhTW = {
     /** 按了就直接重設並儲存 */
     resetToDiscord: '重設為 {name}？',
   },
+  help: {
+    link: '說明',
+    title: '使用說明',
+    toc: '目錄',
+    pending: '準備中',
+    pendingHello: '嗨！這篇還在寫',
+    pendingBody: '這個功能已經可以用了，只是說明還沒寫好。先看看其他篇，或直接到網站上試試看。',
+    notFound: '找不到這篇說明。',
+    prev: '上一篇',
+    next: '下一篇',
+    tips: '小提醒',
+    /** 登入頁上給還沒加入的人 */
+    fromLogin: '還沒加入？先看看這個網站能做什麼 →',
+    demo: {
+      steps: '操作步驟',
+      play: '播放示意',
+      pause: '暫停示意',
+      paused: '已暫停',
+    },
+    modules: {
+      start: '開始使用',
+      graph: '關係圖',
+      games: '遊戲',
+      tags: '機制與主題',
+      board: '留言板',
+      account: '帳號',
+      admin: '管理（admin）',
+    },
+    pages: {
+      start: {
+        welcome: {
+          title: '這個網站是什麼',
+          intro:
+            '桌遊機制圖譜把我們玩過、想玩的桌遊，和它們用到的「機制」連在一起：看一款遊戲用了哪些機制，也能從一個機制找到其他用到它的遊戲。',
+          more: '每個人可以標記想玩、玩過，替遊戲評重度；列表裡沒有的遊戲，也能用 BGA 代號自己新增。',
+          membersOnly: '網站內容只給成員看，要先用 Discord 登入；這份說明不用登入也能看。',
+          sections: '說明目錄',
+        },
+        login: {
+          title: '用 Discord 登入',
+          intro: '網站只給成員使用，用 Discord 帳號登入就好，不用另外註冊。',
+          steps: {
+            button: '在登入頁按「用 Discord 登入」',
+            authorize: '跳到 Discord 的授權頁，按「授權」',
+            done: '回到網站，右上角出現你的頭像和暱稱，就登入好了',
+          },
+          discordTitle: '授權存取你的帳號',
+          discordBody: '桌遊機制圖譜想讀取你的 Discord 名稱與頭像。',
+          discordAuthorize: '授權',
+          tips: {
+            returnTo: '登入後會回到你原本要看的頁面。',
+            nickname: '暱稱預設是 Discord 上的名稱，之後可以在「我的設定」改。',
+            logout: '要登出，按右上角的「登出」。',
+          },
+        },
+        display: { title: '切換語言與外觀' },
+      },
+      graph: {
+        read: {
+          title: '看懂關係圖',
+          intro: '首頁的圓形圖把遊戲和機制畫在同一個圈上：遊戲用到某個機制，兩點之間就有一條線。',
+          steps: {
+            game: '把滑鼠移到一款遊戲上：它用到的機制和連線會亮起來',
+            mechanism: '移到一個機制上：用到它的遊戲會亮起來',
+            select: '點一下節點：旁邊出現詳情，網址也會記住選了哪一個',
+            clear: '點圖的空白處，取消選取',
+          },
+          tips: {
+            share: '選取後的網址可以直接貼給別人，打開就是同一個畫面。',
+            icons: '螢幕夠寬時，圖的左邊有遊戲圖示，移上去圖也會跟著亮。',
+            keyboard: '也可以用鍵盤：Tab 移到節點，Enter 選取。',
+          },
+        },
+        wishes: { title: '大家想玩' },
+      },
+      games: {
+        browse: { title: '瀏覽遊戲列表' },
+        marks: {
+          title: '標記想玩、玩過',
+          intro:
+            '遊戲頁（或在首頁點一款遊戲後的詳情）有「想玩」和「玩過」兩個按鈕，按一下就切換，馬上儲存。',
+          steps: {
+            wish: '按「☆ 想玩」：星星變實心，這款加進你的想玩清單',
+            played: '按「玩過」：標記你玩過這款',
+            undo: '再按一次就取消',
+          },
+          tips: {
+            wishes: '首頁的「大家想玩」會統計有多少人想玩，可以拿來決定下次開什麼。',
+            records: '有遊玩紀錄的遊戲，「玩過」會顯示次數而且不能取消，因為紀錄才是依據。',
+            visible: '遊戲頁會列出誰玩過、誰想玩，其他成員看得到你的標記。',
+          },
+        },
+        weight: {
+          title: '評重度',
+          intro:
+            '重度是遊戲有多複雜，1.0 最輕、9.9 最重。在遊戲頁拖動滑桿評分，大家的平均顯示在旁邊。',
+          steps: {
+            start: '還沒評過時，滑桿停在大家的平均，數字是「—」',
+            drag: '拖動滑桿，左邊的數字跟著變',
+            save: '放開就自動儲存，大家的平均也跟著更新',
+            clear: '想收回，按「取消我的評分」',
+          },
+          tips: {
+            keyboard: '也可以用鍵盤：focus 在滑桿上按方向鍵，每次 0.1，停下來約半秒後儲存。',
+            scale: '刻度上的 5.0 不在正中間，因為範圍是 1.0 到 9.9。',
+            average: '平均取小數一位，旁邊括號是評分人數。',
+          },
+        },
+        add: {
+          title: '用 BGA 代號新增遊戲',
+          intro:
+            '列表裡沒有的遊戲，每個成員都能新增：只要填 Board Game Arena（BGA）上的遊戲代號，名稱、人數、機制與主題都會從 BGA 帶入。',
+          steps: {
+            open: '到「遊戲」頁，按「＋ 新增遊戲」',
+            slug: '輸入 BGA 代號，例如 hanabi',
+            lookup: '按「查詢」，確認預覽的名稱和人數對不對',
+            add: '按「新增」：遊戲建好了，先標著「需要 admin review」',
+          },
+          whereTitle: '代號在哪裡找',
+          where: '到 BGA 打開那款遊戲的介紹頁，網址最後一段就是代號，只有小寫英文字母和數字。',
+          tips: {
+            review:
+              'admin 確認過名稱、機制與主題後，「需要 admin review」標籤就會拿掉；在那之前遊戲一樣可以標記、評分。',
+            exists: '如果已經有這款遊戲，會提示你並附上連結，直接過去看就好。',
+            login: '新增遊戲要先登入。',
+          },
+        },
+      },
+      tags: {
+        mechanisms: { title: '機制列表與機制頁' },
+        themes: { title: '主題列表與主題頁' },
+      },
+      board: {
+        post: { title: '留言與回覆' },
+        edit: { title: '編輯留言與紀錄' },
+      },
+      account: {
+        nickname: {
+          title: '改暱稱',
+          intro:
+            '暱稱是大家在遊玩紀錄、留言板這些地方看到的名字。第一次登入時用 Discord 上的名稱，之後可以自己改。',
+          steps: {
+            open: '點右上角的頭像，進到「我的設定」',
+            type: '輸入新的暱稱',
+            save: '按「儲存」，整個網站馬上換成新暱稱',
+            reset: '想改回來，按「重設為…」換回 Discord 上的名稱',
+          },
+          tips: {
+            where: '暱稱最多 50 個字。',
+            unique: '暱稱不用跟別人不一樣，不過取個大家認得出來的比較好。',
+            login: '之後再用 Discord 登入，不會蓋掉你改好的暱稱。',
+          },
+        },
+      },
+      admin: {
+        review: { title: '審核成員新增的遊戲' },
+        sync: { title: '從 BGA 同步機制與主題' },
+      },
+    },
+  },
   adminGame: {
     titleNew: '新增遊戲',
     titleEdit: '編輯：{name}',

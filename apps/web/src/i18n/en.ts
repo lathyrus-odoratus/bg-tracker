@@ -218,6 +218,178 @@ const en: MessageSchema = {
     saved: 'Saved',
     resetToDiscord: 'Reset to {name}?',
   },
+  help: {
+    link: 'Help',
+    title: 'Help',
+    toc: 'Contents',
+    pending: 'Coming soon',
+    pendingHello: 'Hi! This page is still being written',
+    pendingBody:
+      'The feature already works; its guide just isn’t ready yet. Check out the other pages, or go try it on the site.',
+    notFound: 'This help page doesn’t exist.',
+    prev: 'Previous',
+    next: 'Next',
+    tips: 'Tips',
+    fromLogin: 'Not a member yet? See what this site does →',
+    demo: {
+      steps: 'Steps',
+      play: 'Play demo',
+      pause: 'Pause demo',
+      paused: 'Paused',
+    },
+    modules: {
+      start: 'Getting started',
+      graph: 'Graph',
+      games: 'Games',
+      tags: 'Mechanisms & themes',
+      board: 'Board',
+      account: 'Account',
+      admin: 'Admin',
+    },
+    pages: {
+      start: {
+        welcome: {
+          title: 'What is this site?',
+          intro:
+            'The Board Game Mechanism Map links the games we’ve played or want to play with the mechanisms they use: see which mechanisms a game has, or start from a mechanism and find other games that use it.',
+          more: 'Everyone can mark games as wanted or played and rate their weight. If a game is missing, you can add it yourself with its BGA slug.',
+          membersOnly:
+            'The site is for members only, so you’ll need to log in with Discord. This help is open to everyone.',
+          sections: 'Contents',
+        },
+        login: {
+          title: 'Log in with Discord',
+          intro:
+            'The site is for members only. Log in with your Discord account—no separate sign-up.',
+          steps: {
+            button: 'On the login page, press “Log in with Discord”',
+            authorize: 'On Discord’s authorization page, press “Authorize”',
+            done: 'Back on the site, your avatar and nickname appear at the top right—you’re in',
+          },
+          discordTitle: 'Authorize access to your account',
+          discordBody: 'Board Game Mechanism Map wants to read your Discord name and avatar.',
+          discordAuthorize: 'Authorize',
+          tips: {
+            returnTo: 'After logging in you go back to the page you were trying to open.',
+            nickname:
+              'Your nickname starts as your Discord name; you can change it later in My settings.',
+            logout: 'To log out, press “Log out” at the top right.',
+          },
+        },
+        display: { title: 'Language and appearance' },
+      },
+      graph: {
+        read: {
+          title: 'Reading the graph',
+          intro:
+            'The circle on the home page puts games and mechanisms on the same ring: when a game uses a mechanism, a line connects the two.',
+          steps: {
+            game: 'Hover over a game: the mechanisms it uses and their lines light up',
+            mechanism: 'Hover over a mechanism: the games that use it light up',
+            select:
+              'Click a node: details appear beside the graph, and the URL remembers your pick',
+            clear: 'Click an empty spot in the graph to clear the selection',
+          },
+          tips: {
+            share: 'You can share the URL after selecting a node—it opens the same view.',
+            icons:
+              'On wide screens, game icons sit left of the graph; hovering them lights up the graph too.',
+            keyboard: 'Keyboard works too: Tab to a node, Enter to select it.',
+          },
+        },
+        wishes: { title: 'Most wanted' },
+      },
+      games: {
+        browse: { title: 'Browsing games' },
+        marks: {
+          title: 'Marking wanted and played',
+          intro:
+            'A game page (or the details after clicking a game on the home page) has “Want to play” and “Played” buttons. Press to toggle; it saves right away.',
+          steps: {
+            wish: 'Press “☆ Want to play”: the star fills in and the game joins your wishlist',
+            played: 'Press “Played” to mark that you’ve played it',
+            undo: 'Press again to undo',
+          },
+          tips: {
+            wishes:
+              '“Most wanted” on the home page counts how many people want each game—handy for picking the next one.',
+            records:
+              'Games with play records show a play count on “Played” and can’t be unmarked; the records decide.',
+            visible:
+              'Game pages list who played and who wants to play, so other members can see your marks.',
+          },
+        },
+        weight: {
+          title: 'Rating weight',
+          intro:
+            'Weight is how complex a game is, from 1.0 (light) to 9.9 (heavy). Drag the slider on a game page to rate it; everyone’s average is shown next to it.',
+          steps: {
+            start: 'Before you rate, the slider rests on the average and the number shows “—”',
+            drag: 'Drag the slider; the number on the left follows',
+            save: 'Let go to save automatically; the average updates too',
+            clear: 'Changed your mind? Press “Clear my rating”',
+          },
+          tips: {
+            keyboard:
+              'Keyboard works too: focus the slider and use the arrow keys (0.1 per press); it saves about half a second after you stop.',
+            scale: 'The 5.0 tick isn’t in the middle because the range is 1.0 to 9.9.',
+            average:
+              'The average is rounded to one decimal; the number in brackets is how many people rated.',
+          },
+        },
+        add: {
+          title: 'Adding a game by BGA slug',
+          intro:
+            'Any member can add a missing game: just enter its slug on Board Game Arena (BGA), and the name, player count, mechanisms and themes come from BGA.',
+          steps: {
+            open: 'On the Games page, press “+ Add game”',
+            slug: 'Enter the BGA slug, e.g. hanabi',
+            lookup: 'Press “Look up” and check the previewed name and player count',
+            add: 'Press “Add”: the game is created, marked “Needs admin review” for now',
+          },
+          whereTitle: 'Where to find the slug',
+          where:
+            'Open the game’s page on BGA; the last part of the URL is the slug—lowercase letters and digits only.',
+          tips: {
+            review:
+              'Once an admin checks the name, mechanisms and themes, the “Needs admin review” label goes away. Until then the game can still be marked and rated.',
+            exists: 'If the game already exists, you’ll get a link to it instead.',
+            login: 'You need to log in to add games.',
+          },
+        },
+      },
+      tags: {
+        mechanisms: { title: 'Mechanisms' },
+        themes: { title: 'Themes' },
+      },
+      board: {
+        post: { title: 'Posting and replying' },
+        edit: { title: 'Editing posts and history' },
+      },
+      account: {
+        nickname: {
+          title: 'Changing your nickname',
+          intro:
+            'Your nickname is the name others see on play records, the board and elsewhere. It starts as your Discord name, and you can change it.',
+          steps: {
+            open: 'Click your avatar at the top right to open My settings',
+            type: 'Type a new nickname',
+            save: 'Press “Save”: the whole site switches to the new nickname',
+            reset: 'To go back, press “Reset to …” to use your Discord name again',
+          },
+          tips: {
+            where: 'Nicknames can be up to 50 characters.',
+            unique: 'Nicknames don’t have to be unique, but pick one people will recognize.',
+            login: 'Logging in with Discord again won’t overwrite the nickname you set.',
+          },
+        },
+      },
+      admin: {
+        review: { title: 'Reviewing member-added games' },
+        sync: { title: 'Syncing mechanisms and themes from BGA' },
+      },
+    },
+  },
   adminGame: {
     titleNew: 'Add a game',
     titleEdit: 'Edit: {name}',

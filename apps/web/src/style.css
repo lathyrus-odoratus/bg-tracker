@@ -97,3 +97,29 @@
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
+
+/* 說明頁示意畫面：換畫面時淡入、標籤彈出 */
+@theme {
+  --animate-demo-in: demo-in 300ms ease-out both;
+  --animate-demo-pop: demo-pop 400ms cubic-bezier(0.3, 1.6, 0.6, 1) both;
+
+  @keyframes demo-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes demo-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-demo-in,
+  .animate-demo-pop {
+    animation: none;
+  }
+}
