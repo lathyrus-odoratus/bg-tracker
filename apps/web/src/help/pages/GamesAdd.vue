@@ -2,6 +2,7 @@
 import ReviewBadge from '../../components/ReviewBadge.vue'
 import { localName } from '../../i18n/index.ts'
 import DemoStage from '../DemoStage.vue'
+import DemoCover from '../DemoCover.vue'
 import DemoCursor from '../DemoCursor.vue'
 import HelpTips from '../HelpTips.vue'
 import TypedText from '../TypedText.vue'
@@ -66,10 +67,7 @@ const TARGETS = ['[data-add]', '[data-slug]', '[data-lookup]', '[data-confirm]']
             v-if="done(2)"
             class="animate-demo-in flex items-center gap-3 rounded-2xl bg-card p-3 shadow-card"
           >
-            <span
-              class="flex size-12 flex-none items-center justify-center rounded-lg bg-game/15 text-2xl"
-              >🎆</span
-            >
+            <DemoCover :id="game.id" size="md" />
             <div class="grid flex-1 gap-0.5">
               <span class="font-black">{{ localName(game) }}</span>
               <span class="text-sm text-muted">{{

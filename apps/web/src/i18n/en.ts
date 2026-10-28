@@ -276,7 +276,24 @@ const en: MessageSchema = {
             logout: 'To log out, press “Log out” at the top right.',
           },
         },
-        display: { title: 'Language and appearance' },
+        display: {
+          title: 'Language and appearance',
+          intro:
+            'Switch between Chinese and English, and between light and dark, at the top right—no login needed.',
+          steps: {
+            locale: 'Press the language button: it shows the language you’ll switch to',
+            dark: 'Press ☾ for dark mode',
+            system: 'Press ◐ to follow your device’s light or dark setting',
+          },
+          tips: {
+            names:
+              'Game, mechanism and theme names switch too: the English UI shows English names (from BGA), falling back to Chinese.',
+            default:
+              'Until you pick a language, Chinese is used if your browser prefers it; otherwise English.',
+            browser: 'Both settings are saved in this browser; pick again on another device.',
+            notThemes: '“Appearance” here means light or dark UI—not the “themes” that tag games.',
+          },
+        },
       },
       graph: {
         read: {
@@ -297,10 +314,45 @@ const en: MessageSchema = {
             keyboard: 'Keyboard works too: Tab to a node, Enter to select it.',
           },
         },
-        wishes: { title: 'Most wanted' },
+        wishes: {
+          title: 'Most wanted',
+          intro:
+            '“Most wanted” on the right of the home page ranks members’ wishlists: the more people mark a game “Want to play”, the higher it goes.',
+          others: 'Press “Want to play” on any game',
+          steps: {
+            list: 'With nothing selected on the graph, the right side shows “Most wanted”',
+            wish: 'When someone marks a game, its count goes up and the ranking updates',
+            open: 'Click a game name to see who wants to play it',
+          },
+          tips: {
+            who: 'Ties are sorted by name; up to 10 games are listed.',
+            names:
+              'The ranking only shows counts; see “Who wants to play” on the game page for names.',
+            selected:
+              'Selecting a node on the graph replaces this with its details; click an empty spot to come back.',
+          },
+        },
       },
       games: {
-        browse: { title: 'Browsing games' },
+        browse: {
+          title: 'Browsing games',
+          intro:
+            '“Games” at the top lists every game, sorted by name. Click a row to open that game.',
+          meta: '{players} players',
+          gamePage:
+            'A game page has everything about it: wanted/played, weight, mechanisms and themes, who played, who wants to play, play records, and links to BGA and BGG.',
+          steps: {
+            list: 'Each row shows the name, player count, length and number of mechanisms',
+            image: '“List images” switches between small icons and banners',
+            open: 'Click a row to open the game page',
+          },
+          tips: {
+            sort: 'The English UI sorts by English names.',
+            image: 'List images are a trial; your choice is saved in this browser.',
+            links:
+              'On wide screens, the home page also shows every game as an icon on the left; click one to see details beside the graph.',
+          },
+        },
         marks: {
           title: 'Marking wanted and played',
           intro:
@@ -359,12 +411,83 @@ const en: MessageSchema = {
         },
       },
       tags: {
-        mechanisms: { title: 'Mechanisms' },
-        themes: { title: 'Themes' },
+        mechanisms: {
+          title: 'Mechanisms',
+          intro:
+            'Mechanisms are how a game plays—cooperative, card drafting, hand management and so on. Start from a mechanism to find games that play alike.',
+          steps: {
+            list: 'Open “Mechanisms” at the top and click one',
+            game: 'The mechanism page lists the games that use it; click one to open it',
+            next: 'Mechanisms on the game page are links too—keep exploring',
+          },
+          tips: {
+            source: 'The mechanism list and each game’s mechanisms come from BGA.',
+            description: 'Some mechanisms have a description added by an admin.',
+            graph:
+              'The circle graph on the home page shows the same data as a picture—good for the big picture.',
+          },
+        },
+        themes: {
+          title: 'Themes',
+          intro:
+            'Themes are what a game is about—animals, history, fantasy and so on. They’re the quickest way to find a game with a certain feel.',
+          steps: {
+            list: 'Open “Themes” at the top and click one',
+            game: 'The theme page lists its games; click one to open it',
+            back: 'Theme tags on the game page link back to the theme',
+          },
+          tips: {
+            notAppearance:
+              'These themes are what games are about—not the light/dark “appearance” at the top right.',
+            source: 'The theme list and each game’s themes come from BGA.',
+            many: 'A game can have several themes.',
+          },
+        },
       },
       board: {
-        post: { title: 'Posting and replying' },
-        edit: { title: 'Editing posts and history' },
+        post: {
+          title: 'Posting and replying',
+          intro:
+            'The Board is where everyone chats and plans game nights. Write a new post or reply to one.',
+          sample: {
+            first: 'Anyone up for Carcassonne on Friday?',
+            mine: 'Anyone up for Hanabi tonight?',
+            reply: 'Friday works for me!',
+          },
+          steps: {
+            write: 'Write your message in the box at the top',
+            submit: 'Press “Post”: it appears at the top',
+            reply: 'To reply, press “Reply” on a post; the box shows “Reply to #1”',
+            submitReply: 'Post it, and it shows which post it replies to',
+            jump: 'Click “Reply to #1” to scroll to that post and briefly highlight it',
+          },
+          tips: {
+            length: 'Posts can be up to 2000 characters, line breaks included.',
+            order: 'Newest first; scroll down and press “Load more” for older posts.',
+            jump: 'If the replied-to post hasn’t loaded yet, clicking “Reply to #N” loads older posts until it finds it.',
+          },
+        },
+        edit: {
+          title: 'Editing posts and history',
+          intro:
+            'Fix a typo or add something by editing your own post; everyone can see the edit history.',
+          sample: {
+            before: 'Anyone up for Hanabi tonight?',
+            added: ' Starting at 8.',
+          },
+          steps: {
+            open: 'Press “Edit” on your own post',
+            type: 'Change the text',
+            save: 'Press “Save”: the post is marked as edited',
+            history: 'Click “edited N times” to see every version',
+          },
+          tips: {
+            own: 'You can only edit your own posts; others’ posts only have “Reply”.',
+            history:
+              'Edit history is visible to everyone: the current version on top, the original at the bottom.',
+            delete: 'Posts can’t be deleted for now—edit to fix mistakes.',
+          },
+        },
       },
       account: {
         nickname: {
@@ -385,8 +508,40 @@ const en: MessageSchema = {
         },
       },
       admin: {
-        review: { title: 'Reviewing member-added games' },
-        sync: { title: 'Syncing mechanisms and themes from BGA' },
+        review: {
+          title: 'Reviewing member-added games',
+          intro:
+            'Games members add by BGA slug are marked “Needs admin review”. Once an admin checks them and confirms, the label goes away.',
+          steps: {
+            find: 'Games marked “Needs admin review” in the list are waiting for a check',
+            check:
+              'Check the name, mechanisms and themes on the game page; press “Edit” to fix anything',
+            confirm: 'If it all looks right, press “Confirm” to remove the label',
+          },
+          tips: {
+            adminOnly: 'Only admins see the confirm box; other members just see the label.',
+            noChange: '“Confirm” only removes the label; it doesn’t change any game data.',
+            fullForm: 'Games admins add with the full form don’t need review.',
+          },
+        },
+        sync: {
+          title: 'Syncing mechanisms and themes from BGA',
+          intro:
+            'BGA adjusts the mechanism and theme tags of its games. Admins can update every game to BGA’s tags in one go.',
+          ok: 'OK',
+          steps: {
+            open: 'On the Games page, press “Sync mechanisms & themes from BGA”',
+            confirm: 'Confirm: manual changes to mechanisms and themes will be overwritten',
+            result:
+              'When done, it shows how many games were updated and any slugs BGA couldn’t find',
+          },
+          tips: {
+            scope: 'Only games with a BGA slug are touched; ones BGA can’t find stay as they are.',
+            newTags: 'New mechanisms and themes on BGA are added to the lists automatically.',
+            nameEn: 'Games without an English name get one filled in.',
+            single: 'To update just one game, press “Fill from BGA” on its edit page.',
+          },
+        },
       },
     },
   },

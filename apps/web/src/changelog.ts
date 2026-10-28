@@ -20,6 +20,16 @@ export const BACKLOG: string[] = [
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.9.1',
+    date: '2026-10-28',
+    changes: [
+      {
+        kind: '改進',
+        text: '使用說明補齊全部 16 篇：語言與外觀、大家想玩、遊戲列表、機制、主題、留言板、admin 的審核與同步',
+      },
+    ],
+  },
+  {
     version: '0.9.0',
     date: '2026-10-28',
     changes: [

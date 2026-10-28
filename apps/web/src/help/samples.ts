@@ -36,3 +36,28 @@ export const SAMPLE_DISCORD_NAME = 'alex0817'
 export const SAMPLE_NICKNAME = 'Alex'
 
 export const sampleGame = (id: string) => SAMPLE_GRAPH.games.find((g) => g.id === id)!
+export const sampleMechanism = (id: string) => SAMPLE_GRAPH.mechanisms.find((m) => m.id === id)!
+
+/** 示意的遊戲圖（不載入 BGA 的圖片） */
+export const SAMPLE_EMOJI: Record<string, string> = {
+  hanabi: '🎆',
+  splendor: '💎',
+  carcassonne: '🏰',
+  sevenwonders: '🏛️',
+  azul: '🔷',
+}
+
+export const SAMPLE_THEMES = [
+  { id: 'renaissance', name: '文藝復興', nameEn: 'Renaissance', games: ['splendor', 'azul'] },
+  { id: 'medieval', name: '中世紀', nameEn: 'Medieval', games: ['carcassonne'] },
+  { id: 'ancient', name: '古代', nameEn: 'Ancient', games: ['sevenwonders'] },
+  { id: 'fireworks', name: '煙火', nameEn: 'Fireworks', games: ['hanabi'] },
+]
+
+/** 某款遊戲用到的機制 */
+export const sampleGameMechanisms = (gameId: string) =>
+  SAMPLE_GRAPH.links.filter((l) => l.gameId === gameId).map((l) => sampleMechanism(l.mechanismId))
+
+/** 用到某個機制的遊戲 */
+export const sampleMechanismGames = (mechanismId: string) =>
+  SAMPLE_GRAPH.links.filter((l) => l.mechanismId === mechanismId).map((l) => sampleGame(l.gameId))

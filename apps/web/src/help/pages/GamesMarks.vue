@@ -3,6 +3,7 @@ import type { MyGameStat } from '@bg-tracker/shared'
 import MarkToggles from '../../components/MarkToggles.vue'
 import { localName } from '../../i18n/index.ts'
 import DemoStage from '../DemoStage.vue'
+import DemoCover from '../DemoCover.vue'
 import DemoCursor from '../DemoCursor.vue'
 import HelpTips from '../HelpTips.vue'
 import { sampleGame } from '../samples.ts'
@@ -34,10 +35,7 @@ const TARGETS = ['wish', 'played', 'wish']
   >
     <template #default="{ step, acted, done }">
       <div class="mx-auto flex max-w-sm items-center gap-4 rounded-2xl bg-card p-4 shadow-card">
-        <span
-          class="flex size-16 flex-none items-center justify-center rounded-xl bg-game/15 text-3xl"
-          >🎆</span
-        >
+        <DemoCover :id="game.id" size="lg" />
         <div class="grid gap-2">
           <p class="text-lg font-black">{{ localName(game) }}</p>
           <MarkToggles :game-id="game.id" :stat="stat(done)" />

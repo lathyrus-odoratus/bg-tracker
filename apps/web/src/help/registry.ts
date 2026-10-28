@@ -19,32 +19,50 @@ export const HELP_MODULES: { id: string; pages: Omit<HelpPage, 'module'>[] }[] =
     pages: [
       { id: 'welcome', component: page(() => import('./pages/StartWelcome.vue')) },
       { id: 'login', component: page(() => import('./pages/StartLogin.vue')) },
-      { id: 'display' },
+      { id: 'display', component: page(() => import('./pages/StartDisplay.vue')) },
     ],
   },
   {
     id: 'graph',
     pages: [
       { id: 'read', component: page(() => import('./pages/GraphRead.vue')) },
-      { id: 'wishes' },
+      { id: 'wishes', component: page(() => import('./pages/GraphWishes.vue')) },
     ],
   },
   {
     id: 'games',
     pages: [
-      { id: 'browse' },
+      { id: 'browse', component: page(() => import('./pages/GamesBrowse.vue')) },
       { id: 'marks', component: page(() => import('./pages/GamesMarks.vue')) },
       { id: 'weight', component: page(() => import('./pages/GamesWeight.vue')) },
       { id: 'add', component: page(() => import('./pages/GamesAdd.vue')) },
     ],
   },
-  { id: 'tags', pages: [{ id: 'mechanisms' }, { id: 'themes' }] },
-  { id: 'board', pages: [{ id: 'post' }, { id: 'edit' }] },
+  {
+    id: 'tags',
+    pages: [
+      { id: 'mechanisms', component: page(() => import('./pages/TagsMechanisms.vue')) },
+      { id: 'themes', component: page(() => import('./pages/TagsThemes.vue')) },
+    ],
+  },
+  {
+    id: 'board',
+    pages: [
+      { id: 'post', component: page(() => import('./pages/BoardPost.vue')) },
+      { id: 'edit', component: page(() => import('./pages/BoardEdit.vue')) },
+    ],
+  },
   {
     id: 'account',
     pages: [{ id: 'nickname', component: page(() => import('./pages/AccountNickname.vue')) }],
   },
-  { id: 'admin', pages: [{ id: 'review' }, { id: 'sync' }] },
+  {
+    id: 'admin',
+    pages: [
+      { id: 'review', component: page(() => import('./pages/AdminReview.vue')) },
+      { id: 'sync', component: page(() => import('./pages/AdminSync.vue')) },
+    ],
+  },
 ]
 
 export const HELP_PAGES: HelpPage[] = HELP_MODULES.flatMap((m) =>

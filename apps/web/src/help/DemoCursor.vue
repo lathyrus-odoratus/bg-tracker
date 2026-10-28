@@ -14,14 +14,14 @@ const props = defineProps<{
 
 const { el: stage, step, acted } = useDemo()
 const pos = ref<{ x: number; y: number } | null>(null)
+/** 目標不見了（點下去換了畫面）：停在原地淡出，不要飄回左上角 */
+const visible = ref(false)
 
 function place() {
   const root = stage.value
   const target = props.target ? root?.querySelector(props.target) : null
-  if (!root || !target) {
-    pos.value = null
-    return
-  }
+  visible.value = !!(root && target)
+  if (!root || !target) return
   const r = target.getBoundingClientRect()
   const s = root.getBoundingClientRect()
   pos.value = {
@@ -49,7 +49,7 @@ onBeforeUnmount(() => observer?.disconnect())
 <template>
   <div
     class="pointer-events-none absolute top-0 left-0 z-10 transition-[translate,opacity] duration-700 ease-out motion-reduce:transition-none"
-    :class="pos ? 'opacity-100' : 'opacity-0'"
+    :class="visible ? 'opacity-100' : 'opacity-0'"
     :style="pos ? { translate: `${pos.x}px ${pos.y}px` } : undefined"
   >
     <span
